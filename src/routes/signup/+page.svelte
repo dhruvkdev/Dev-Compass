@@ -39,11 +39,11 @@
 	}
 </script>
 
-<div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+<div class="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
 	<div class="w-full max-w-md space-y-8">
 		<div>
-			<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
-			<p class="mt-2 text-center text-sm text-gray-600">
+			<h2 class="mt-6 text-center text-3xl font-extrabold text-foreground">Create your account</h2>
+			<p class="mt-2 text-center text-sm text-muted-foreground">
 				Or
 				<a href="/signin" class="font-medium text-indigo-600 hover:text-indigo-500">
 					sign in to your existing account
@@ -60,7 +60,7 @@
 						type="text"
 						required
 						bind:value={name}
-						class="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+						class="relative block w-full appearance-none rounded-none rounded-t-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:ring-primary focus:outline-none sm:text-sm"
 						placeholder="Full name"
 					/>
 				</div>
@@ -73,7 +73,7 @@
 						autocomplete="email"
 						required
 						bind:value={email}
-						class="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+						class="relative block w-full appearance-none rounded-none border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:ring-primary focus:outline-none sm:text-sm"
 						placeholder="Email address"
 					/>
 				</div>
@@ -86,21 +86,21 @@
 						autocomplete="new-password"
 						required
 						bind:value={password}
-						class="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:ring-indigo-500 focus:outline-none sm:text-sm"
+						class="relative block w-full appearance-none rounded-none rounded-b-md border border-input bg-background px-3 py-2 text-foreground placeholder-muted-foreground focus:z-10 focus:border-primary focus:ring-primary focus:outline-none sm:text-sm"
 						placeholder="Password"
 					/>
 				</div>
 			</div>
 
 			{#if error}
-				<div class="text-center text-sm text-red-500">{error}</div>
+				<div class="text-center text-sm text-destructive">{error}</div>
 			{/if}
 
 			<div>
 				<button
 					type="submit"
 					disabled={loading}
-					class="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none disabled:opacity-50"
+					class="group relative flex w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:outline-none disabled:opacity-50"
 				>
 					{#if loading}
 						Signing up...
@@ -114,10 +114,10 @@
 		<div class="mt-6">
 			<div class="relative">
 				<div class="absolute inset-0 flex items-center">
-					<div class="w-full border-t border-gray-300"></div>
+					<div class="w-full border-t border-border"></div>
 				</div>
 				<div class="relative flex justify-center text-sm">
-					<span class="bg-gray-50 px-2 text-gray-500"> Or continue with </span>
+					<span class="bg-background px-2 text-muted-foreground"> Or continue with </span>
 				</div>
 			</div>
 
@@ -125,7 +125,7 @@
 				<div>
 					<button
 						on:click={() => handleSocialSignIn('github')}
-						class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50"
+						class="inline-flex w-full justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
 					>
 						<span class="sr-only">Sign up with GitHub</span>
 						<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -141,7 +141,7 @@
 				<div>
 					<button
 						on:click={() => handleSocialSignIn('google')}
-						class="inline-flex w-full justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm hover:bg-gray-50"
+						class="inline-flex w-full justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-muted-foreground shadow-sm hover:bg-accent hover:text-accent-foreground"
 					>
 						<span class="sr-only">Sign up with Google</span>
 						<svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
