@@ -10,6 +10,6 @@
 
 <Navbar />
 
-<div class="pt-28">
+<div>
 	{@render children()}
 </div>

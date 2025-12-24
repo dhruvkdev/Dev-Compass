@@ -56,11 +56,7 @@
 	>
 		<!-- Logo -->
 		<a href="/" class="flex items-center gap-3" on:click={closeMenus}>
-			<div
-				class="relative flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 shadow-lg shadow-indigo-500/30"
-			>
-				<span class="font-bold text-white">D</span>
-			</div>
+			<img src="/logo.svg" alt="Logo" />
 			<span class="text-lg font-bold tracking-tight text-white/90">DevCompass</span>
 		</a>
 
