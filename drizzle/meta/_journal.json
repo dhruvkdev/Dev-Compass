@@ -15,6 +15,27 @@
       "when": 1766487996787,
       "tag": "0001_dear_tigra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766598127075,
+      "tag": "0002_faithful_shadowcat",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1766678786276,
+      "tag": "0003_pretty_calypso",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766679313227,
+      "tag": "0004_brainy_colonel_america",
+      "breakpoints": true
     }
   ]
 }

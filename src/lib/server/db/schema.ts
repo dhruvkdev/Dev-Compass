@@ -1,4 +1,7 @@
-import { pgTable, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, uniqueIndex, pgEnum, jsonb, index } from "drizzle-orm/pg-core";
+
+export const platformEnum = pgEnum('platform', ['leetcode', 'codeforces', 'codechef', 'github', 'geeksforgeeks', 'atcoder', 'hackerrank', 'hackerearth']);
+export const contextType = pgEnum('contextType', ['dsa_roadmap', 'cp_strategy', 'dev_suggestion', 'global_summary']);
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
@@ -6,6 +9,7 @@ export const user = pgTable("user", {
 	email: text("email").notNull().unique(),
 	emailVerified: boolean("email_verified").notNull(),
 	image: text("image"),
+	goal: text("goal"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull()
 });
@@ -45,3 +49,40 @@ export const verification = pgTable("verification", {
 	createdAt: timestamp("created_at"),
 	updatedAt: timestamp("updated_at")
 });
+
+export const platform_handles = pgTable("platform_handles", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => user.id),
+	platform: platformEnum().notNull(),
+	handle: text("handle").notNull(),
+	url: text("url").notNull(),
+	verificationToken: text("verification_token"),
+	verifiedAt: timestamp("verified_at"),
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull()
+}, (table) => [
+	uniqueIndex('user_id_platform_unique').on(table.userId, table.platform),
+]);
+
+export const daily_snapshots = pgTable("daily_snapshots", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => user.id),
+	platform: platformEnum().notNull(),
+	rawData: jsonb(),
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull()
+}, (table) => [
+	index('user_platform_date_idx').on(table.userId, table.platform, table.createdAt)
+]);
+
+export const ai_insights = pgTable("ai_insights", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => user.id),
+	platform: platformEnum(),
+	contextType: contextType().notNull(),
+	insights: jsonb(),
+	createdAt: timestamp("created_at").notNull(),
+	updatedAt: timestamp("updated_at").notNull().$onUpdate(() => new Date())
+}, (table) => [
+	uniqueIndex('user_id_context_type_unique').on(table.userId, table.contextType)
+]);

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "user_id_context_type_unique" ON "ai_insights" USING btree ("user_id","contextType");
