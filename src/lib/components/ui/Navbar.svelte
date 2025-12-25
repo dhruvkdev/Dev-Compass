@@ -118,7 +118,7 @@
 								on:click={closeMenus}>Dashboard</a
 							>
 							<a
-								href="/settings"
+								href="/dashboard/profile"
 								class="block rounded-lg px-3 py-2 text-sm text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
 								on:click={closeMenus}>Settings</a
 							>

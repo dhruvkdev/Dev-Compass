@@ -54,7 +54,11 @@
 	"dependencies": {
 		"@node-rs/argon2": "^2.0.2",
 		"@tabler/icons-svelte": "^3.36.0",
+		"@upstash/redis": "^1.35.8",
 		"better-auth": "^1.4.8",
+		"chart.js": "^4.5.1",
+		"chartjs-adapter-date-fns": "^3.0.0",
+		"date-fns": "^4.1.0",
 		"lucide-svelte": "^0.562.0",
 		"postgres": "^3.4.7",
 		"svelte-motion": "^0.12.2"
