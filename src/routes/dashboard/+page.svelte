@@ -108,7 +108,7 @@
 		<!-- 3. Results -->
 		{#if form?.success && form?.platform === 'codeforces'}
 			<div transition:fade={{ duration: 400 }}>
-				<CodeforcesDashboard data={form.data} />
+				<CodeforcesDashboard data={form.data} {activeTab} />
 			</div>
 		{/if}
 	</div>
