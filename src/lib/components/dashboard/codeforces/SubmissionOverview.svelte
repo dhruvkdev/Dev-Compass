@@ -22,6 +22,7 @@
 	let verdictChart: Chart | null = null;
 	let langChart: Chart | null = null;
 
+	// --- Data Processing ---
 	let stats = $derived.by(() => {
 		let accepted = 0;
 		let total = 0;
@@ -33,21 +34,24 @@
 			for (const sub of submissions) {
 				// Languages
 				langs[sub.programmingLanguage] = (langs[sub.programmingLanguage] || 0) + 1;
-
 				// Verdicts
 				verdicts[sub.verdict] = (verdicts[sub.verdict] || 0) + 1;
 				if (sub.verdict === 'OK') accepted++;
 			}
 		}
-
 		return { accepted, total, langs, verdicts };
 	});
 
 	let successRate = $derived(
-		stats.total > 0 ? ((stats.accepted / stats.total) * 100).toFixed(1) : '0.0'
+		stats.total > 0 ? ((stats.accepted / stats.total) * 100).toFixed(0) : '0'
 	);
 
-	// Prepare Chart Data
+	// --- Chart Configurations ---
+	const chartColors = {
+		verdict: ['#22c55e', '#ef4444', '#eab308', '#a855f7', '#71717a'], // Green, Red, Yellow, Purple, Zinc
+		lang: ['#3b82f6', '#06b6d4', '#8b5cf6', '#ec4899', '#f97316'] // Blue, Cyan, Violet, Pink, Orange
+	};
+
 	let verdictData = $derived({
 		labels: ['Accepted', 'Wrong Answer', 'Time Limit', 'Runtime Error', 'Others'],
 		datasets: [
@@ -63,7 +67,7 @@
 							(stats.verdicts['TIME_LIMIT_EXCEEDED'] || 0) +
 							(stats.verdicts['RUNTIME_ERROR'] || 0))
 				],
-				backgroundColor: ['#22c55e', '#ef4444', '#eab308', '#a855f7', '#71717a'],
+				backgroundColor: chartColors.verdict,
 				borderWidth: 0,
 				hoverOffset: 4
 			}
@@ -75,28 +79,47 @@
 		datasets: [
 			{
 				data: Object.values(stats.langs).slice(0, 5),
-				backgroundColor: ['#3b82f6', '#06b6d4', '#8b5cf6', '#ec4899', '#f97316'],
+				backgroundColor: chartColors.lang,
 				borderWidth: 0,
 				hoverOffset: 4
 			}
 		]
 	});
 
-	const options: ChartOptions<'doughnut'> = {
+	const commonOptions: ChartOptions<'doughnut'> = {
 		responsive: true,
 		maintainAspectRatio: false,
-		cutout: '70%',
+		cutout: '75%', // Thinner ring for modern look
 		plugins: {
 			legend: { display: false },
 			tooltip: {
 				backgroundColor: 'rgba(9, 9, 11, 0.9)',
-				padding: 10,
-				callbacks: {
-					label: (item) => ` ${item.label}: ${item.raw}`
-				}
+				padding: 12,
+				cornerRadius: 8,
+				callbacks: { label: (item) => ` ${item.label}: ${item.raw}` }
 			}
 		}
 	};
+
+	// Helper to generate verdict rows cleanly in UI
+	let verdictMeta = $derived([
+		{ label: 'Accepted', count: stats.verdicts['OK'] || 0, color: chartColors.verdict[0] },
+		{
+			label: 'Wrong Answer',
+			count: stats.verdicts['WRONG_ANSWER'] || 0,
+			color: chartColors.verdict[1]
+		},
+		{
+			label: 'Time Limit',
+			count: stats.verdicts['TIME_LIMIT_EXCEEDED'] || 0,
+			color: chartColors.verdict[2]
+		},
+		{
+			label: 'Runtime Error',
+			count: stats.verdicts['RUNTIME_ERROR'] || 0,
+			color: chartColors.verdict[3]
+		}
+	]);
 
 	$effect(() => {
 		if (verdictCanvas && submissions.length > 0) {
@@ -104,7 +127,7 @@
 			verdictChart = new Chart(verdictCanvas, {
 				type: 'doughnut',
 				data: verdictData,
-				options
+				options: commonOptions
 			});
 			return () => verdictChart?.destroy();
 		}
@@ -116,114 +139,114 @@
 			langChart = new Chart(langCanvas, {
 				type: 'doughnut',
 				data: langData,
-				options
+				options: commonOptions
 			});
 			return () => langChart?.destroy();
 		}
 	});
 </script>
 
-<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-	<!-- Verdict Stats -->
+<div class="grid grid-cols-1 gap-6 xl:grid-cols-2">
 	<div
-		class="group relative overflow-hidden
-		rounded-2xl border border-white/10
-		bg-gradient-to-b from-zinc-950/90 to-black/80
-		p-6 backdrop-blur-xl
-
-		transition-all duration-300
-		hover:border-white/20
-		hover:shadow-2xl hover:shadow-black/60"
+		class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 p-6 backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-zinc-900/80"
 	>
-		<div class="mb-4 flex items-center justify-between">
-			<h3 class="text-lg font-semibold text-white">Verdict Distribution</h3>
-			<div class="text-right">
-				<div class="text-2xl font-bold text-green-400">{stats.accepted}</div>
-				<div class="text-xs text-zinc-500">Accepted</div>
+		<div class="mb-6 flex items-start justify-between">
+			<div>
+				<h3 class="text-lg font-semibold text-white">Verdict Distribution</h3>
+				<p class="text-xs text-zinc-500">Out of {stats.total} total submissions</p>
+			</div>
+			<div class="rounded-lg bg-green-500/10 px-3 py-1.5 text-right">
+				<div class="text-xl font-bold text-green-400 tabular-nums">{stats.accepted}</div>
+				<div class="text-[10px] tracking-wider text-green-500/60 uppercase">Accepted</div>
 			</div>
 		</div>
 
-		<div class="flex items-center gap-8">
-			<div class="relative h-40 w-40 shrink-0">
-				<div
-					class="absolute inset-0 rounded-full
-					bg-gradient-to-br from-white/10 to-transparent
-					opacity-60 blur-lg"
-				></div>
-
+		<div class="flex flex-col gap-8 sm:flex-row sm:items-center">
+			<div class="relative mx-auto h-40 w-40 shrink-0 sm:mx-0">
 				<canvas bind:this={verdictCanvas}></canvas>
-
 				<div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-					<span class="text-2xl font-bold text-white">{successRate}%</span>
-					<span class="text-[10px] tracking-widest text-zinc-500 uppercase"> Success </span>
+					<span class="text-3xl font-bold text-white tabular-nums"
+						>{successRate}<span class="text-lg">%</span></span
+					>
+					<span class="text-[10px] tracking-widest text-zinc-500 uppercase">Success</span>
 				</div>
 			</div>
 
-			<div class="flex-1 space-y-2 text-sm">
-				<div class="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-white/5">
-					<span class="flex items-center gap-2 text-zinc-400">
-						<span class="h-2 w-2 rounded-full bg-green-500"></span>
-						Accepted
-					</span>
-					<span class="font-medium text-white">{stats.verdicts['OK'] || 0}</span>
-				</div>
-
-				<div class="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-white/5">
-					<span class="flex items-center gap-2 text-zinc-400"
-						><span class="h-2 w-2 rounded-full bg-red-500"></span>Wrong Answer</span
+			<div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
+				{#each verdictMeta as item}
+					{@const percentage = stats.total > 0 ? Math.round((item.count / stats.total) * 100) : 0}
+					<div
+						class="flex flex-col gap-1.5 rounded-xl border border-white/5 bg-white/5 p-3 transition-colors hover:bg-white/10"
 					>
-					<span class="font-medium text-white">{stats.verdicts['WRONG_ANSWER'] || 0}</span>
-				</div>
-
-				<div class="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-white/5">
-					<span class="flex items-center gap-2 text-zinc-400"
-						><span class="h-2 w-2 rounded-full bg-yellow-500"></span>Time Limit</span
-					>
-					<span class="font-medium text-white">{stats.verdicts['TIME_LIMIT_EXCEEDED'] || 0}</span>
-				</div>
+						<div class="flex items-center justify-between text-xs">
+							<span class="flex items-center gap-2 font-medium text-zinc-300">
+								<span class="h-2 w-2 rounded-full shadow-sm" style="background-color: {item.color}"
+								></span>
+								{item.label}
+							</span>
+							<span class="text-zinc-500">{percentage}%</span>
+						</div>
+						<div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+							<div
+								class="h-full rounded-full transition-all duration-500"
+								style="width: {percentage}%; background-color: {item.color}"
+							></div>
+						</div>
+						<div class="text-right text-xs font-medium text-white tabular-nums">{item.count}</div>
+					</div>
+				{/each}
 			</div>
 		</div>
 	</div>
 
-	<!-- Language Stats -->
 	<div
-		class="group relative overflow-hidden
-		rounded-2xl border border-white/10
-		bg-gradient-to-b from-zinc-950/90 to-black/80
-		p-6 backdrop-blur-xl
-
-		transition-all duration-300
-		hover:border-white/20
-		hover:shadow-2xl hover:shadow-black/60"
+		class="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-white/10 bg-zinc-900/50 p-6 backdrop-blur-md transition-all duration-300 hover:border-white/20 hover:bg-zinc-900/80"
 	>
-		<div class="mb-4 flex items-center justify-between">
-			<h3 class="text-lg font-semibold text-white">Programming Languages</h3>
-			<div class="text-right">
-				<div class="text-2xl font-bold text-blue-400">{Object.keys(stats.langs).length}</div>
-				<div class="text-xs text-zinc-500">Languages Used</div>
+		<div class="mb-6 flex items-start justify-between">
+			<div>
+				<h3 class="text-lg font-semibold text-white">Language Usage</h3>
+				<p class="text-xs text-zinc-500">Breakdown by frequency</p>
+			</div>
+			<div class="rounded-lg bg-blue-500/10 px-3 py-1.5 text-right">
+				<div class="text-xl font-bold text-blue-400 tabular-nums">
+					{Object.keys(stats.langs).length}
+				</div>
+				<div class="text-[10px] tracking-wider text-blue-500/60 uppercase">Languages</div>
 			</div>
 		</div>
 
-		<div class="flex items-center gap-8">
-			<div class="relative h-40 w-40 shrink-0">
+		<div class="flex flex-col gap-8 sm:flex-row sm:items-center">
+			<div class="relative mx-auto h-40 w-40 shrink-0 sm:mx-0">
 				<canvas bind:this={langCanvas}></canvas>
 				<div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-					<span class="text-2xl font-bold text-white">{stats.total}</span>
-					<span class="text-[10px] tracking-widest text-zinc-500 uppercase">Total Submissions</span>
+					<span class="text-3xl font-bold text-white tabular-nums">{stats.total}</span>
+					<span class="text-[10px] tracking-widest text-zinc-500 uppercase">Total</span>
 				</div>
 			</div>
 
-			<div class="flex-1 space-y-2 text-sm">
+			<div class="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
 				{#each Object.entries(stats.langs).slice(0, 4) as [lang, count], i}
-					<div class="flex items-center justify-between">
-						<span class="flex items-center gap-2 text-zinc-400">
-							<span
-								class="h-2 w-2 rounded-full"
-								style="background-color: {['#3b82f6', '#06b6d4', '#8b5cf6', '#ec4899'][i]}"
-							></span>
-							{lang}
-						</span>
-						<span class="text-white">{count}</span>
+					{@const color = chartColors.lang[i]}
+					{@const percentage = Math.round((count / stats.total) * 100)}
+
+					<div
+						class="flex flex-col gap-1.5 rounded-xl border border-white/5 bg-white/5 p-3 transition-colors hover:bg-white/10"
+					>
+						<div class="flex items-center justify-between text-xs">
+							<span class="flex items-center gap-2 font-medium text-zinc-300">
+								<span class="h-2 w-2 rounded-full shadow-sm" style="background-color: {color}"
+								></span>
+								{lang}
+							</span>
+							<span class="text-zinc-500">{percentage}%</span>
+						</div>
+						<div class="h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+							<div
+								class="h-full rounded-full transition-all duration-500"
+								style="width: {percentage}%; background-color: {color}"
+							></div>
+						</div>
+						<div class="text-right text-xs font-medium text-white tabular-nums">{count}</div>
 					</div>
 				{/each}
 			</div>
