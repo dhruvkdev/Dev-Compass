@@ -60,10 +60,10 @@
 			<!-- Rising Particles Effect -->
 			<RisingParticles particleCount={40} className="z-10" />
 			<div
-				class="absolute top-[-20%] left-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-600/20 blur-[120px]"
+				class="absolute top-[-20%] left-[-10%] h-125 w-125 rounded-full bg-indigo-600/20 blur-[120px]"
 			></div>
 			<div
-				class="absolute right-[-10%] bottom-[-20%] h-[500px] w-[500px] rounded-full bg-purple-600/20 blur-[120px]"
+				class="absolute right-[-10%] bottom-[-20%] h-125 w-125 rounded-full bg-purple-600/20 blur-[120px]"
 			></div>
 		</div>
 
@@ -84,11 +84,11 @@
 				</div>
 
 				<h1
-					class="mb-6 bg-gradient-to-b from-white to-white/60 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl md:leading-[1.1]"
+					class="mb-6 bg-linear-to-b from-white to-white/60 bg-clip-text text-5xl font-bold tracking-tight text-transparent sm:text-7xl md:leading-[1.1]"
 				>
 					Master Your <br />
 					<span
-						class="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
+						class="bg-linear-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent"
 						>Coding Journey</span
 					>
 				</h1>
@@ -147,7 +147,7 @@
 							{feature.description}
 						</p>
 						<div
-							class="absolute inset-0 -z-10 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+							class="absolute inset-0 -z-10 bg-linear-to-br from-indigo-500/5 to-purple-500/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
 						></div>
 					</div>
 				{/each}
@@ -197,10 +197,10 @@
 					>
 						DevCompass
 					</h2>
-					<div class="relative h-40 w-[40rem]">
+					<div class="relative h-40 w-160">
 						<!-- Gradients -->
 						<div
-							class="absolute inset-x-20 top-0 h-[2px] w-3/4 bg-gradient-to-r from-transparent
+							class="absolute inset-x-20 top-0 h-0.5 w-3/4 bg-gradient-to-r from-transparent
 							via-indigo-500 to-transparent blur-sm"
 						></div>
 						<div
@@ -208,7 +208,7 @@
 							via-indigo-500 to-transparent"
 						></div>
 						<div
-							class="absolute inset-x-60 top-0 h-[5px] w-1/4 bg-gradient-to-r from-transparent
+							class="absolute inset-x-60 top-0 h-1.25 w-1/4 bg-gradient-to-r from-transparent
 							via-sky-500 to-transparent blur-sm"
 						></div>
 						<div
@@ -227,7 +227,7 @@
 
 						<!-- Radial Gradient to prevent sharp edges -->
 						<div
-							class="absolute inset-0 h-full w-full bg-black [mask-image:radial-gradient(350px_200px_at_top,transparent_20%,white)]"
+							class="absolute inset-0 h-full w-full bg-black mask-[radial-gradient(350px_200px_at_top,transparent_20%,white)]"
 						></div>
 					</div>
 				</div>

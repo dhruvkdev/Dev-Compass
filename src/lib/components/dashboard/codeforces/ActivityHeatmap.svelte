@@ -1,446 +1,352 @@
 <script lang="ts">
-	import {
-		Flame,
-		Zap,
-		Trophy,
-		Target,
-		Calendar,
-		Activity,
-		TrendingUp,
-		Award,
-		Target as TargetIcon,
-		BarChart3
-	} from 'lucide-svelte';
-	import { formatDistanceToNow } from 'date-fns';
+	import Activity from '@tabler/icons-svelte/icons/activity';
+    import {
+        Flame,
+        Zap,
+        Trophy,
+        Calendar,
+        TrendingUp,
+        Award,
+        Target as TargetIcon,
+        BarChart3,
+        ChevronRight,
+        ChevronLeft
+    } from 'lucide-svelte';
 
-	interface Submission {
-		creationTimeSeconds: number;
-		verdict: string;
-		problem: {
-			rating?: number;
-			contestId?: number;
-			index?: string;
-		};
-	}
+    interface Submission {
+        creationTimeSeconds: number;
+        verdict: string;
+        problem: {
+            rating?: number;
+            contestId?: number;
+            index?: string;
+        };
+    }
 
-	let { submissions = [] }: { submissions: Submission[] } = $props();
+    let { submissions = [] }: { submissions: Submission[] } = $props();
 
-	// --- Data Processing ---
-	// 1. Generate Calendar (Last 365 Days)
-	const dates: Date[] = [];
-	const today = new Date();
-	for (let i = 0; i < 365; i++) {
-		const d = new Date(today);
-		d.setDate(d.getDate() - i);
-		dates.push(d);
-	}
-	dates.reverse();
+    // --- Data Processing ---
+    const dates: Date[] = [];
+    const today = new Date();
+    for (let i = 0; i < 365; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        dates.push(d);
+    }
+    dates.reverse();
 
-	// 2. Process Submissions
-	let data = $derived.by(() => {
-		const activityMap = new Map<string, { count: number; maxRating: number }>();
-		let totalSubmissions = 0;
-		let acceptedCount = 0;
-		let fireDays = 0;
-		const uniqueSolved = new Set<string>();
-		let maxStreak = 0;
-		let currentStreak = 0;
+    let data = $derived.by(() => {
+        const activityMap = new Map<string, { count: number; maxRating: number }>();
+        let totalSubmissions = 0;
+        let acceptedCount = 0;
+        let fireDays = 0;
+        const uniqueSolved = new Set<string>();
+        let maxStreak = 0;
 
-		if (!submissions)
-			return {
-				activityMap,
-				stats: {
-					totalSubmissions: 0,
-					fireDays: 0,
-					acceptanceRate: 0,
-					totalSolved: 0,
-					currentStreak: 0,
-					maxStreak: 0
-				}
-			};
+        if (!submissions || submissions.length === 0) 
+            return { activityMap, stats: { totalSubmissions: 0, fireDays: 0, acceptanceRate: 0, totalSolved: 0, currentStreak: 0, maxStreak: 0 }};
 
-		totalSubmissions = submissions.length;
+        totalSubmissions = submissions.length;
 
-		// Populate Map & Counts
-		for (const sub of submissions) {
-			const date = new Date(sub.creationTimeSeconds * 1000).toISOString().split('T')[0];
-			const current = activityMap.get(date) || { count: 0, maxRating: 0 };
+        for (const sub of submissions) {
+            const date = new Date(sub.creationTimeSeconds * 1000).toISOString().split('T')[0];
+            const current = activityMap.get(date) || { count: 0, maxRating: 0 };
 
-			activityMap.set(date, {
-				count: current.count + 1,
-				maxRating:
-					sub.verdict === 'OK'
-						? Math.max(current.maxRating, sub.problem.rating || 0)
-						: current.maxRating
-			});
+            activityMap.set(date, {
+                count: current.count + 1,
+                maxRating: sub.verdict === 'OK' ? Math.max(current.maxRating, sub.problem.rating || 0) : current.maxRating
+            });
 
-			if (sub.verdict === 'OK') {
-				acceptedCount++;
-				if (sub.problem.contestId && sub.problem.index) {
-					uniqueSolved.add(`${sub.problem.contestId}-${sub.problem.index}`);
-				}
-			}
-		}
+            if (sub.verdict === 'OK') {
+                acceptedCount++;
+                if (sub.problem.contestId && sub.problem.index) uniqueSolved.add(`${sub.problem.contestId}-${sub.problem.index}`);
+            }
+        }
 
-		// Calculate Streaks & Fire Days
-		const sortedDates = Array.from(activityMap.keys()).sort();
-		let tempStreak = 0;
-		let prevDate: Date | null = null;
-		let activeStreak = 0;
+        const sortedDates = Array.from(activityMap.keys()).sort();
+        let tempStreak = 0;
+        let prevDate: Date | null = null;
+        let activeStreak = 0;
 
-		for (const dateStr of sortedDates) {
-			const d = new Date(dateStr);
-			const info = activityMap.get(dateStr)!;
+        for (const dateStr of sortedDates) {
+            const d = new Date(dateStr);
+            const info = activityMap.get(dateStr)!;
+            if (info.count >= 8) fireDays++;
 
-			// Fire Day
-			if (info.count >= 8) fireDays++;
+            if (prevDate) {
+                const diff = (d.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
+                tempStreak = Math.round(diff) === 1 ? tempStreak + 1 : 1;
+            } else {
+                tempStreak = 1;
+            }
+            if (tempStreak > maxStreak) maxStreak = tempStreak;
+            prevDate = d;
+            activeStreak = tempStreak;
+        }
 
-			// Streak (only count active days)
-			if (prevDate) {
-				const diff = (d.getTime() - prevDate.getTime()) / (1000 * 3600 * 24);
-				if (Math.round(diff) === 1) {
-					tempStreak++;
-				} else {
-					tempStreak = 1;
-				}
-			} else {
-				tempStreak = 1;
-			}
-			if (tempStreak > maxStreak) maxStreak = tempStreak;
-			prevDate = d;
-			activeStreak = tempStreak; // Track last running streak
-		}
+        return {
+            activityMap,
+            stats: {
+                totalSubmissions,
+                fireDays,
+                acceptanceRate: totalSubmissions > 0 ? ((acceptedCount / totalSubmissions) * 100).toFixed(1) : 0,
+                totalSolved: uniqueSolved.size,
+                currentStreak: activeStreak,
+                maxStreak
+            }
+        };
+    });
 
-		// Check current streak (is today/yesterday active?)
-		const todayStr = new Date().toISOString().split('T')[0];
-		const yesterday = new Date();
-		yesterday.setDate(yesterday.getDate() - 1);
-		const yesterdayStr = yesterday.toISOString().split('T')[0];
+    // --- Visual Helpers ---
+    function getIntensityColor(count: number) {
+        if (count === 0) return 'bg-zinc-800/40';
+        if (count <= 2) return 'bg-orange-900/40';
+        if (count <= 5) return 'bg-orange-700/60';
+        if (count <= 9) return 'bg-orange-500';
+        return 'bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]';
+    }
 
-		const lastActive = sortedDates[sortedDates.length - 1];
-		if (lastActive === todayStr || lastActive === yesterdayStr) {
-			currentStreak = activeStreak;
-		}
+    function getRatingColor(rating: number) {
+        if (rating === 0) return 'bg-zinc-800/40';
+        if (rating < 1200) return 'bg-gray-500';
+        if (rating < 1400) return 'bg-green-500';
+        if (rating < 1600) return 'bg-cyan-500';
+        if (rating < 1900) return 'bg-blue-500';
+        if (rating < 2100) return 'bg-violet-500';
+        if (rating < 2300) return 'bg-orange-500';
+        return 'bg-red-500';
+    }
 
-		return {
-			activityMap,
-			stats: {
-				totalSubmissions,
-				fireDays,
-				acceptanceRate:
-					totalSubmissions > 0 ? ((acceptedCount / totalSubmissions) * 100).toFixed(1) : 0,
-				totalSolved: uniqueSolved.size,
-				currentStreak,
-				maxStreak
-			}
-		};
-	});
+    // --- Tooltip State ---
+    let hoveredData = $state<{ date: string; info: any; x: number; y: number } | null>(null);
 
-	// --- Visual Helpers ---
-	function getIntensityColor(count: number) {
-		if (count === 0) return 'bg-zinc-800/40';
-		if (count <= 2) return 'bg-gradient-to-br from-orange-900/60 to-orange-800/40';
-		if (count <= 5) return 'bg-gradient-to-br from-orange-700/70 to-orange-600/50';
-		if (count <= 9) return 'bg-gradient-to-br from-orange-500 to-orange-400';
-		return 'bg-gradient-to-br from-orange-400 to-orange-300 shadow-[0_0_12px_rgba(251,146,60,0.7)]';
-	}
+    function showTooltip(e: MouseEvent | FocusEvent, dateStr: string, info: any) {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+        const tooltipWidth = 160;
+        const padding = 12;
 
-	function getRatingColor(rating: number) {
-		if (rating === 0) return 'bg-zinc-800/40';
-		if (rating < 1200) return 'bg-gradient-to-br from-gray-600 to-gray-500';
-		if (rating < 1400) return 'bg-gradient-to-br from-green-600 to-green-500';
-		if (rating < 1600) return 'bg-gradient-to-br from-cyan-600 to-cyan-500';
-		if (rating < 1900) return 'bg-gradient-to-br from-blue-600 to-blue-500';
-		if (rating < 2100) return 'bg-gradient-to-br from-violet-600 to-violet-500';
-		if (rating < 2300) return 'bg-gradient-to-br from-orange-600 to-orange-500';
-		if (rating < 2400) return 'bg-gradient-to-br from-red-500 to-red-400';
-		return 'bg-gradient-to-br from-red-600 to-red-500';
-	}
+        // Clamp X to viewport
+        let x = rect.left + rect.width / 2;
+        x = Math.max(padding + tooltipWidth / 2, 
+            Math.min(window.innerWidth - padding - tooltipWidth / 2, x));
+
+        hoveredData = {
+            date: dateStr,
+            info,
+            x,
+            y: rect.top - 8
+        };
+    }
 </script>
 
-<div class="space-y-8 p-4 md:p-6">
-	<!-- Header -->
-	<div class="mb-10 flex items-start justify-between">
-		<div>
-			<h1 class="text-3xl font-bold tracking-tight text-white">Codeforces Dashboard</h1>
-			<p class="mt-1 text-sm text-zinc-400">Performance insights, ratings, and activity overview</p>
-		</div>
-
-		<div class="rounded-xl bg-white/5 px-4 py-2 text-xs text-zinc-400">Updated today</div>
-	</div>
-
-	<!-- 1. Grind Mode Card -->
-	<div
-		class="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-900/40 p-6 shadow-2xl backdrop-blur-xl"
-	>
-		<!-- Header -->
-		<div class="mb-8">
-			<div class="mb-4 flex items-center gap-3">
-				<div class="rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 p-2.5">
-					<Flame class="h-6 w-6 text-orange-400" />
-				</div>
-				<div>
-					<h3 class="text-xl font-bold text-white">Grind Mode Intensity</h3>
-					<p class="text-sm text-zinc-400">Submission heatmap - More submissions = Hotter color</p>
-				</div>
+<div class="space-y-8 p-4 md:p-6 bg-black text-zinc-100 font-sans selection:bg-orange-500/30">
+    <div class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+		<!-- Title Row -->
+		<div class="flex items-center gap-4">
+			<div class="rounded-xl border border-white/10 bg-indigo-500/10 p-3">
+				<Activity class="h-6 w-6 text-indigo-400" />
 			</div>
 
-			<!-- Stats Grid -->
-			<div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<Zap class="h-4 w-4" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Total Submissions</div>
-					</div>
-					<div class="text-2xl font-bold text-blue-300">{data.stats.totalSubmissions}</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<Flame class="h-4 w-4 text-orange-500" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Fire Days</div>
-					</div>
-					<div class="text-2xl font-bold text-orange-400">{data.stats.fireDays}</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<TargetIcon class="h-4 w-4 text-green-500" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Acceptance</div>
-					</div>
-					<div class="text-2xl font-bold text-green-400">{data.stats.acceptanceRate}%</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<TrendingUp class="h-4 w-4 text-purple-500" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Activity Level</div>
-					</div>
-					<div class="text-2xl font-bold text-purple-400">
-						{Math.round(data.stats.totalSubmissions / 365)}
-						<span class="text-sm text-zinc-500">/day</span>
-					</div>
-				</div>
+			<div>
+				<h1 class="text-2xl font-semibold text-zinc-100">Dashboard</h1>
+				<p class="mt-0.5 text-sm text-zinc-500">
+					Codeforces activity & performance insights
+				</p>
 			</div>
 		</div>
+        <div class="flex items-center gap-2 rounded-full bg-white/5 border border-white/10 px-4 py-1.5 text-[10px] uppercase tracking-widest font-bold text-zinc-400">
+            <span class="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse"></span>
+            Live Data • Last 365 Days
+        </div>
+    </div>
 
-		<!-- Heatmap Container -->
-		<div class="relative rounded-xl bg-black/30 p-4 backdrop-blur-sm">
-			<div class="mb-3 flex items-center justify-between">
-				<div class="text-sm font-medium text-zinc-300">One Year Activity Calendar</div>
-				<div class="flex items-center gap-2 text-xs text-zinc-500">
-					<div class="flex items-center gap-1">
-						<div class="h-2 w-2 rounded-full bg-orange-900/40"></div>
-						<span>Less</span>
-					</div>
-					<div class="flex items-center gap-1">
-						<div class="h-2 w-2 rounded-full bg-orange-500"></div>
-						<span>More</span>
-					</div>
-					<div class="flex items-center gap-1">
-						<div
-							class="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_8px_rgba(251,146,60,0.6)]"
-						></div>
-						<span>🔥 Fire</span>
-					</div>
-				</div>
-			</div>
+    {#if data.stats.totalSubmissions === 0}
+        <div class="flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-white/5 bg-zinc-900/20 py-20 text-center">
+            <div class="mb-4 rounded-full bg-zinc-800/50 p-6">
+                <BarChart3 class="h-12 w-12 text-zinc-600" />
+            </div>
+            <h3 class="text-xl font-bold text-white">No activity detected</h3>
+            <p class="mx-auto mt-2 max-w-xs text-sm text-zinc-500">
+                We couldn't find any submissions for this handle. Start solving problems on Codeforces to see your heatmaps!
+            </p>
+        </div>
+    {:else}
+        <div class="group relative rounded-3xl border border-white/10 bg-zinc-900/30 p-6 md:p-8 shadow-2xl backdrop-blur-xl transition-all hover:border-orange-500/20">
+            <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="rounded-2xl bg-orange-500/10 p-3 ring-1 ring-orange-500/20">
+                        <Flame class="h-6 w-6 text-orange-400" />
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold tracking-tight text-white">Grind Mode</h3>
+                        <div class="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+                            <span>Less</span>
+                            <div class="flex gap-1">
+                                <div class="h-2 w-2 rounded-sm bg-zinc-800/40"></div>
+                                <div class="h-2 w-2 rounded-sm bg-orange-900/40"></div>
+                                <div class="h-2 w-2 rounded-sm bg-orange-700/60"></div>
+                                <div class="h-2 w-2 rounded-sm bg-orange-500"></div>
+                                <div class="h-2 w-2 rounded-sm bg-orange-400"></div>
+                            </div>
+                            <span>More</span>
+                        </div>
+                    </div>
+                </div>
 
-			<!-- Heatmap Grid -->
-			<div
-				class="scrollbar-thin scrollbar-track-zinc-800/50 scrollbar-thumb-zinc-600 flex w-full overflow-x-auto pb-4"
-			>
-				<div class="grid grid-flow-col grid-rows-7 gap-1.5">
-					{#each dates as date}
-						{@const dateStr = date.toISOString().split('T')[0]}
-						{@const info = data.activityMap.get(dateStr) || { count: 0 }}
+                <div class="flex flex-wrap gap-8">
+                    <div class="flex items-center gap-3">
+                        <Zap class="h-5 w-5 text-blue-400" />
+                        <div>
+                            <div class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Submissions</div>
+                            <div class="text-xl font-bold leading-none text-white">{data.stats.totalSubmissions}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <Flame class="h-5 w-5 text-orange-500" />
+                        <div>
+                            <div class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Fire Days</div>
+                            <div class="text-xl font-bold leading-none text-white">{data.stats.fireDays}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-						<div
-							class="group relative h-3 w-3 rounded-md {getIntensityColor(
-								info.count
-							)} transition-all duration-200 hover:scale-125 hover:shadow-lg"
-						>
-							{#if info.count >= 10}
-								<div class="absolute -inset-0.5 animate-pulse rounded-md bg-orange-400/20"></div>
-							{/if}
-							<!-- Tooltip -->
-							<div
-								class="absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 group-hover:block"
-							>
-								<div class="rounded-lg bg-zinc-900 px-3 py-2 text-xs whitespace-nowrap shadow-xl">
-									<div class="font-semibold text-white">{dateStr}</div>
-									<div class="mt-1 text-zinc-300">
-										{info.count} submission{info.count !== 1 ? 's' : ''}
-									</div>
-									{#if info.count >= 10}
-										<div class="mt-1 text-orange-400">🔥 Fire Day!</div>
-									{/if}
-								</div>
-								<div
-									class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-zinc-900"
-								></div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
+            <div class="relative">
+                <div class="pointer-events-none absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-zinc-950/50 to-transparent z-10"></div>
+                <div class="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-zinc-950/50 to-transparent z-10"></div>
+                
+                <div class="scrollbar-thin flex w-full overflow-x-auto pb-4 scroll-smooth">
+                    <div class="grid grid-flow-col grid-rows-7 gap-1.5 px-4">
+                        {#each dates as date}
+                            {@const dateStr = date.toISOString().split('T')[0]}
+                            {@const info = data.activityMap.get(dateStr) || { count: 0 }}
+                            <div
+                                tabindex="0"
+                                role="gridcell"
+                                class="relative h-5 w-5 -m-1 flex items-center justify-center outline-none group/cell focus-visible:ring-2 ring-white/50 rounded-sm"
+                                onmouseenter={(e) => showTooltip(e, dateStr, info)}
+                                onmouseleave={() => hoveredData = null}
+                                onfocus={(e) => showTooltip(e as any, dateStr, info)}
+                                onblur={() => hoveredData = null}
+                            >
+                                <div class="h-3 w-3 rounded-sm {getIntensityColor(info.count)} transition-all group-hover/cell:scale-125 group-focus/cell:scale-125">
+                                    {#if info.count >= 10}
+                                        <div class="absolute inset-0 animate-pulse bg-white/20 rounded-sm"></div>
+                                    {/if}
+                                </div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center justify-center gap-2 mt-2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                    <ChevronLeft class="h-3 w-3" /> Scroll for history <ChevronRight class="h-3 w-3" />
+                </div>
+            </div>
+        </div>
 
-			<!-- Month Labels -->
-			<div class="mt-2 flex justify-between text-xs text-zinc-500">
-				{#each ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as month}
-					<div>{month}</div>
-				{/each}
-			</div>
-		</div>
-	</div>
+        <div class="group relative rounded-3xl border border-white/10 bg-zinc-900/30 p-6 md:p-8 shadow-2xl backdrop-blur-xl transition-all hover:border-emerald-500/20">
+            <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div class="flex items-center gap-4">
+                    <div class="rounded-2xl bg-emerald-500/10 p-3 ring-1 ring-emerald-500/20">
+                        <Trophy class="h-6 w-6 text-emerald-400" />
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold tracking-tight text-white">Problem Progress</h3>
+                        <div class="mt-1 flex flex-wrap gap-2 text-[9px] font-bold uppercase text-zinc-500">
+                            <div class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-gray-500"></span> <span>&lt;1.2k</span></div>
+                            <div class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-green-500"></span> <span>1.2k</span></div>
+                            <div class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-cyan-500"></span> <span>1.4k</span></div>
+                            <div class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-blue-500"></span> <span>1.6k</span></div>
+                            <div class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-red-500"></span> <span>Expert+</span></div>
+                        </div>
+                    </div>
+                </div>
 
-	<!-- 2. Daily Top-Rated Card -->
-	<div
-		class="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-900/40 p-6 shadow-2xl backdrop-blur-xl"
-	>
-		<!-- Header -->
-		<div class="mb-8">
-			<div class="mb-4 flex items-center gap-3">
-				<div class="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 p-2.5">
-					<Trophy class="h-6 w-6 text-emerald-400" />
-				</div>
-				<div>
-					<h3 class="text-xl font-bold text-white">Problem Progress</h3>
-					<p class="text-sm text-zinc-400">Highest rated problem solved each day</p>
-				</div>
-			</div>
+                <div class="flex flex-wrap gap-8">
+                    <div class="flex items-center gap-3">
+                        <TrendingUp class="h-5 w-5 text-emerald-400" />
+                        <div>
+                            <div class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Acceptance</div>
+                            <div class="text-xl font-bold leading-none text-white">{data.stats.acceptanceRate}%</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <BarChart3 class="h-5 w-5 text-purple-400" />
+                        <div>
+                            <div class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Max Streak</div>
+                            <div class="text-xl font-bold leading-none text-white">{data.stats.maxStreak}d</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-			<!-- Stats Grid -->
-			<div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<Award class="h-4 w-4 text-indigo-400" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Problems Solved</div>
-					</div>
-					<div class="text-2xl font-bold text-indigo-300">{data.stats.totalSolved}</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<BarChart3 class="h-4 w-4 text-green-400" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Current Streak</div>
-					</div>
-					<div class="text-2xl font-bold text-green-400">{data.stats.currentStreak} days</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<TrendingUp class="h-4 w-4 text-yellow-500" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Best Streak</div>
-					</div>
-					<div class="text-2xl font-bold text-yellow-400">{data.stats.maxStreak} days</div>
-				</div>
-				<div class="rounded-xl bg-gradient-to-br from-black/60 to-black/40 p-4 backdrop-blur-sm">
-					<div class="mb-1 flex items-center gap-2 text-zinc-400">
-						<Target class="h-4 w-4 text-red-400" />
-						<div class="text-xs font-semibold tracking-wider uppercase">Max Rating</div>
-					</div>
-					<div class="text-2xl font-bold text-red-400">
-						{(() => {
-							const ratings = Array.from(data.activityMap.values()).map((d) => d.maxRating);
-							return Math.max(...ratings, 0);
-						})()}
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Heatmap Container -->
-		<div class="relative rounded-xl bg-black/30 p-4 backdrop-blur-sm">
-			<div class="mb-3 flex items-center justify-between">
-				<div class="text-sm font-medium text-zinc-300">Highest Rating Achieved Daily</div>
-				<div class="flex items-center gap-2">
-					<Calendar class="h-4 w-4 text-zinc-500" />
-					<span class="text-xs text-zinc-500">Last 365 Days</span>
-				</div>
-			</div>
-
-			<!-- Heatmap Grid -->
-			<div
-				class="scrollbar-thin scrollbar-track-zinc-800/50 scrollbar-thumb-zinc-600 flex w-full overflow-x-auto pb-4"
-			>
-				<div class="grid grid-flow-col grid-rows-7 gap-1.5">
-					{#each dates as date}
-						{@const dateStr = date.toISOString().split('T')[0]}
-						{@const info = data.activityMap.get(dateStr) || { maxRating: 0 }}
-
-						<div
-							class="group relative h-3 w-3 rounded-md {getRatingColor(
-								info.maxRating
-							)} transition-all duration-200 hover:scale-125 hover:shadow-lg"
-						>
-							<!-- Tooltip -->
-							<div
-								class="absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 group-hover:block"
-							>
-								<div class="rounded-lg bg-zinc-900 px-3 py-2 text-xs whitespace-nowrap shadow-xl">
-									<div class="font-semibold text-white">{dateStr}</div>
-									<div class="mt-1">
-										<span class="text-zinc-400">Max Rating: </span>
-										<span class="font-bold text-white">{info.maxRating || 'None'}</span>
-									</div>
-									{#if info.maxRating >= 2400}
-										<div class="mt-1 text-red-400">🎯 Legendary!</div>
-									{/if}
-								</div>
-								<div
-									class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-zinc-900"
-								></div>
-							</div>
-						</div>
-					{/each}
-				</div>
-			</div>
-
-			<!-- Month Labels -->
-			<div class="mt-2 flex justify-between text-xs text-zinc-500">
-				{#each ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as month}
-					<div>{month}</div>
-				{/each}
-			</div>
-		</div>
-
-		<!-- Legend -->
-		<div class="mt-6 flex flex-wrap items-center justify-center gap-4 rounded-xl bg-black/20 p-4">
-			<div class="text-xs font-medium text-zinc-400">Rating Legend:</div>
-			<div class="flex flex-wrap items-center gap-3">
-				{#each [{ color: 'bg-gray-500', label: '800+' }, { color: 'bg-green-500', label: '1200+' }, { color: 'bg-cyan-500', label: '1400+' }, { color: 'bg-blue-500', label: '1600+' }, { color: 'bg-violet-500', label: '1900+' }, { color: 'bg-orange-500', label: '2100+' }, { color: 'bg-red-600', label: '2400+' }] as item}
-					<div class="flex items-center gap-2">
-						<div class="h-3 w-3 rounded-full {item.color}"></div>
-						<span class="text-xs text-zinc-400">{item.label}</span>
-					</div>
-				{/each}
-			</div>
-		</div>
-	</div>
-
-	<!-- Summary Footer -->
-	<div class="mt-8 text-center text-sm text-zinc-500">
-		<p>
-			Data updated • {new Date().toLocaleDateString('en-US', {
-				weekday: 'long',
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric'
-			})}
-		</p>
-	</div>
+            <div class="relative rounded-2xl bg-black/40 p-4 ring-1 ring-white/5">
+                <div class="scrollbar-thin flex w-full overflow-x-auto pb-4 scroll-smooth">
+                    <div class="grid grid-flow-col grid-rows-7 gap-1.5 px-4">
+                        {#each dates as date}
+                            {@const dateStr = date.toISOString().split('T')[0]}
+                            {@const info = data.activityMap.get(dateStr) || { count: 0, maxRating: 0 }}
+                            <div
+                                tabindex="0"
+                                role="gridcell"
+                                class="relative h-5 w-5 -m-1 flex items-center justify-center outline-none group/cell focus-visible:ring-2 ring-white/50 rounded-sm"
+                                onmouseenter={(e) => showTooltip(e, dateStr, info)}
+                                onmouseleave={() => hoveredData = null}
+                                onfocus={(e) => showTooltip(e as any, dateStr, info)}
+                                onblur={() => hoveredData = null}
+                            >
+                                <div class="h-3 w-3 rounded-sm {getRatingColor(info.maxRating)} transition-all group-hover/cell:scale-125 group-focus/cell:scale-125"></div>
+                            </div>
+                        {/each}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {/if}
 </div>
 
+{#if hoveredData}
+    <div
+        class="fixed z-[9999] pointer-events-none -translate-x-1/2 -translate-y-full pb-3 transition-all duration-200 ease-out"
+        style="left: {hoveredData.x}px; top: {hoveredData.y}px;"
+    >
+        <div class="bg-zinc-950 border border-white/20 px-3 py-2.5 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-md min-w-[140px]">
+            <div class="flex items-center justify-between mb-2">
+                <div class="text-[9px] text-zinc-500 font-black uppercase tracking-widest">{hoveredData.date}</div>
+                <Calendar class="h-3 w-3 text-zinc-600" />
+            </div>
+            
+            <div class="space-y-1.5">
+                {#if hoveredData.info.count !== undefined}
+                    <div class="flex items-center justify-between gap-4">
+                        <span class="text-[10px] text-zinc-400 font-medium">Activity</span>
+                        <span class="text-xs text-white font-bold">{hoveredData.info.count} <small class="text-zinc-500 font-normal">subs</small></span>
+                    </div>
+                {/if}
+
+                {#if hoveredData.info.maxRating > 0}
+                    <div class="flex items-center justify-between gap-4">
+                        <span class="text-[10px] text-zinc-400 font-medium">Peak</span>
+                        <span class="text-xs text-emerald-400 font-black">{hoveredData.info.maxRating}</span>
+                    </div>
+                {/if}
+            </div>
+
+            {#if hoveredData.info.count >= 10}
+                <div class="mt-2 pt-2 border-t border-white/5 flex items-center gap-1.5 text-orange-400 text-[10px] font-bold italic">
+                    <Flame class="h-3 w-3" /> OVERHEAT!
+                </div>
+            {/if}
+
+            <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-zinc-950 border-r border-b border-white/20 rotate-45"></div>
+        </div>
+    </div>
+{/if}
+
 <style>
-	/* Custom Scrollbar */
-	.scrollbar-thin::-webkit-scrollbar {
-		height: 6px;
-	}
-	.scrollbar-thin::-webkit-scrollbar-track {
-		background: rgba(39, 39, 42, 0.5);
-		border-radius: 3px;
-	}
-	.scrollbar-thin::-webkit-scrollbar-thumb {
-		background: rgba(113, 113, 122, 0.7);
-		border-radius: 3px;
-	}
-	.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-		background: rgba(161, 161, 170, 0.8);
-	}
+    /* Custom Scrollbar for X-overflow */
+    .scrollbar-thin::-webkit-scrollbar { height: 5px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 </style>

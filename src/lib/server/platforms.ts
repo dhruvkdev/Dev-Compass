@@ -1,51 +1,17 @@
 import { env } from '$env/dynamic/private';
 
-// --- LEETCODE (Advanced GraphQL) ---
-// We use a massive query to get everything in one go to save time.
-export async function fetchLeetCodeStats(username: string) {
-    try {
-        const query = `
-            query getUserProfile($username: String!) {
-                allQuestionsCount { difficulty count }
-                matchedUser(username: $username) {
-                    username
-                    profile { ranking }
-                    # 1. Get detailed tag stats (Crucial for finding weaknesses)
-                    tagProblemCounts {
-                        advanced { tagName tagSlug problemsSolved }
-                        intermediate { tagName tagSlug problemsSolved }
-                        fundamental { tagName tagSlug problemsSolved }
-                    }
-                    # 2. Get recent activity to check "Momentum"
-                    submitStats {
-                        acSubmissionNum { difficulty count }
-                    }
-                    # 3. Recent AC submissions to see what they are working on NOW
-                    recentAcSubmissionList(limit: 10) {
-                        title
-                        titleSlug
-                        timestamp
-                    }
-                }
-            }
-        `;
+import { leetCodeClient } from '$lib/server/leetcode/client';
+import type { LeetCodeStats } from '$lib/server/leetcode/types';
 
-        const res = await fetch('https://leetcode.com/graphql', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Referer': 'https://leetcode.com' // Sometimes needed to avoid 403
-            },
-            body: JSON.stringify({ query, variables: { username } })
-        });
+// Re-export type for use in other files if needed, or consumers should import from types
+export type { LeetCodeStats };
 
-        const data = await res.json();
-        return data.data || null;
-    } catch (e) {
-        console.error("LeetCode Fetch Error:", e);
-        return null;
-    }
+export async function fetchLeetCodeStats(username: string): Promise<LeetCodeStats | null> {
+    return leetCodeClient.fetchUser(username);
 }
+
+
+
 
 // --- GITHUB (GraphQL > REST) ---
 // REST API is bad for "Streaks". GraphQL gives us the Contribution Calendar.

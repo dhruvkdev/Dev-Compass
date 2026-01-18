@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { fetchCodeforcesStats, processCodeforcesWeakness } from '$lib/server/platforms';
+import { fetchCodeforcesStats, fetchLeetCodeStats, processCodeforcesWeakness } from '$lib/server/platforms';
 
 export const actions = {
     getPlatformStats: async ({ request }) => {
@@ -27,6 +27,19 @@ export const actions = {
                 data: {
                     ...stats,
                     weakTags
+                }
+            };
+        }
+        else if(platform == 'leetcode'){
+            const stats = await fetchLeetCodeStats(username.toString());
+            if (!stats){
+                return fail(404, { message: 'User not found or API error' });
+            }
+            return {
+                success: true,
+                platform: 'leetcode',
+                data: {
+                    ...stats
                 }
             };
         }

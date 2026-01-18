@@ -2,8 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { fade, slide } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	// We'll create these next
 	import CodeforcesDashboard from '$lib/components/dashboard/codeforces/CodeforcesDashboard.svelte';
+	import { LeetCodeDashboard } from '$lib/components/dashboard/leetcode';
 
 	let { form } = $props();
 
@@ -106,10 +106,16 @@
 		</div>
 
 		<!-- 3. Results -->
-		{#if form?.success && form?.platform === 'codeforces'}
-			<div transition:fade={{ duration: 400 }}>
-				<CodeforcesDashboard data={form.data} {activeTab} />
-			</div>
+		{#if form?.success}
+			{#if form.platform === 'codeforces'}
+				<div transition:fade={{ duration: 400 }}>
+					<CodeforcesDashboard data={form.data} {activeTab} />
+				</div>
+			{:else if form.platform === 'leetcode'}
+				<div transition:fade={{ duration: 400 }}>
+					<LeetCodeDashboard data={form.data} {activeTab} />
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>
