@@ -42,7 +42,7 @@
 
 	let { history = [] }: { history: RatingHistory[] } = $props();
 
-	let chartCanvas: HTMLCanvasElement;
+	let chartCanvas = $state<HTMLCanvasElement>();
 	let chartInstance: Chart | null = null;
 
 	// 1. Process Data

@@ -1,5 +1,5 @@
-import { GET_USER_PROFILE, GET_SKILL_STATS, GET_LANGUAGE_STATS, GET_RECENT_SUBMISSIONS } from './queries';
-import type { LeetCodeStats, GQLUserProfileResponse, GQLSkillStatsResponse, GQLLanguageStatsResponse, GQLRecentSubmissionsResponse } from './types';
+import { GET_USER_PROFILE, GET_SKILL_STATS, GET_LANGUAGE_STATS, GET_RECENT_SUBMISSIONS, GET_CONTEST_HISTORY } from './queries';
+import type { LeetCodeStats, GQLUserProfileResponse, GQLSkillStatsResponse, GQLLanguageStatsResponse, GQLRecentSubmissionsResponse, GQLContestHistoryResponse, ContestRatingHistory } from './types';
 import { leetCodeCache } from './cache';
 
 const LEETCODE_ENDPOINT = 'https://leetcode.com/graphql';
@@ -57,16 +57,20 @@ class LeetCodeClient {
     public async fetchUser(username: string): Promise<LeetCodeStats | null> {
         // 1. Check Cache
         const cached = await leetCodeCache.get(username);
-        if (cached !== undefined) return cached;
+        if (cached !== undefined && cached && cached.contestHistory) {
+            console.log(`[LeetCode] Cache hit for ${username}`);
+            return cached;
+        }
 
         console.log(`Fetching LeetCode stats for ${username}...`);
 
         // 2. Parallel Fetch
-        const [profileRes, skillsRes, languagesRes, submissionsRes] = await Promise.all([
+        const [profileRes, skillsRes, languagesRes, submissionsRes, contestRes] = await Promise.all([
             this.fetchGQL<GQLUserProfileResponse>(GET_USER_PROFILE, { username }),
             this.fetchGQL<GQLSkillStatsResponse>(GET_SKILL_STATS, { username }),
             this.fetchGQL<GQLLanguageStatsResponse>(GET_LANGUAGE_STATS, { username }),
-            this.fetchGQL<GQLRecentSubmissionsResponse>(GET_RECENT_SUBMISSIONS, { username, limit: 20 })
+            this.fetchGQL<GQLRecentSubmissionsResponse>(GET_RECENT_SUBMISSIONS, { username, limit: 20 }),
+            this.fetchGQL<GQLContestHistoryResponse>(GET_CONTEST_HISTORY, { username })
         ]);
 
         // 3. Validation
@@ -82,7 +86,34 @@ class LeetCodeClient {
         const getCount = (list: { difficulty: string; count: number }[], diff: string) =>
             list.find(x => x.difficulty === diff)?.count || 0;
 
-        // 4. Normalization
+        // 4. Normalization - Contest History
+        let contestHistory: ContestRatingHistory = [];
+        if (contestRes?.data?.userContestRankingHistory) {
+            const history = contestRes.data.userContestRankingHistory.filter(c => c.attended);
+            // Sort by start time just to be safe (LeetCode usually returns sorted but good to ensure for delta calc)
+            history.sort((a, b) => a.contest.startTime - b.contest.startTime);
+
+            contestHistory = history.map((point, i) => {
+                const prevRating = i > 0 ? history[i - 1].rating : point.rating; // For first, delta is 0 effectively from itself, or we could handle differently.
+                // Standard convention: Delta is diff from previous. First contest delta is usually 0 or hidden.
+                // Let's make delta 0 for the first one for simplicity.
+                const delta = i > 0 ? point.rating - prevRating : 0;
+
+                return {
+                    contestId: point.contest.startTime, // Use timestamp as ID as it's unique
+                    contestName: point.contest.title,
+                    date: point.contest.startTime,
+                    rating: point.rating,
+                    delta,
+                    ranking: point.ranking
+                };
+            });
+            console.log(`[LeetCode] Parsed ${contestHistory.length} contest records for ${username}`);
+        } else {
+            console.log(`[LeetCode] No contest history found for ${username}. Response:`, JSON.stringify(contestRes?.data));
+        }
+
+        // 4.5. Normalization - Stats
         const stats: LeetCodeStats = {
             profile: {
                 username: user.username || username,
@@ -102,7 +133,8 @@ class LeetCodeClient {
                 fundamental: skillsRes.data.matchedUser.tagProblemCounts.fundamental
             } : null,
             languages: languagesRes?.data?.matchedUser?.languageProblemCount || [],
-            recentSubmissions: submissionsRes?.data?.recentAcSubmissionList || []
+            recentSubmissions: submissionsRes?.data?.recentAcSubmissionList || [],
+            contestHistory
         };
 
         // 5. Update Cache

@@ -643,7 +643,7 @@
 										></div>
 									</div>
 									<div class="mt-1 text-right text-xs text-zinc-500">
-										Mastery {Math.round(tag.percent)}%
+										Mastery {Math.round(Number(tag.percent))}%
 									</div>
 								</div>
 

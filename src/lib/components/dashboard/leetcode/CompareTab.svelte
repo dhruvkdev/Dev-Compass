@@ -9,6 +9,7 @@
 		AlertCircle,
 		Loader2
 	} from 'lucide-svelte';
+	import ContestRatingGraph from './ContestRatingGraph.svelte';
 
 	let { data } = $props();
 
@@ -31,6 +32,18 @@
 			border: 'rgba(16, 185, 129, 0.8)',
 			solid: '#10b981',
 			name: 'Emerald'
+		},
+		{
+			bg: 'rgba(244, 63, 94, 0.2)',
+			border: 'rgba(244, 63, 94, 0.8)',
+			solid: '#f43f5e',
+			name: 'Rose'
+		},
+		{
+			bg: 'rgba(245, 158, 11, 0.2)',
+			border: 'rgba(245, 158, 11, 0.8)',
+			solid: '#f59e0b',
+			name: 'Amber'
 		}
 	];
 
@@ -86,30 +99,22 @@
 		];
 
 		try {
-			// Need to fetch stats for this new user
-			// We reuse the server endpoint via a special API route or just fetch client side if strict CORS allows?
-			// Wait, pure client fetch to alfa-leetcode might fail CORS.
-			// Better to use our own server action or just re-hit the load function?
-			// For now, let's try direct fetch to alfa-leetcode-api since it enables CORS usually.
+			const res = await fetch(`/api/leetcode?username=${handle}`);
 
-			const profileRes = await fetch(`https://alfa-leetcode-api.onrender.com/${handle}`);
-			const profile = await profileRes.json();
-
-			if (!profileRes.ok || profile.errors) {
+			if (!res.ok) {
 				compareUsers[idx].error = 'User not found';
 				compareUsers[idx].loading = false;
 				return;
 			}
 
-			// Minimal data for comparison (Total, Hard, Ranking)
-			compareUsers[idx].data = {
-				profile: {
-					username: profile.username || handle,
-					totalSolved: profile.totalSolved || 0,
-					hardSolved: profile.hardSolved || 0,
-					ranking: profile.ranking || 1000000
-				}
-			};
+			const profile = await res.json();
+			if (!profile) {
+				compareUsers[idx].error = 'User not found';
+				compareUsers[idx].loading = false;
+				return;
+			}
+
+			compareUsers[idx].data = profile; // Full profile with contestHistory
 			compareUsers[idx].loading = false;
 		} catch (e) {
 			compareUsers[idx].error = 'Failed to fetch';
@@ -184,6 +189,24 @@
 			<p class="mt-2 text-xs text-red-400">{error}</p>
 		{/if}
 	</section>
+
+	<!-- Comparison Graph -->
+	<!-- Safely check if any user has contest history -->
+	{#if compareUsers.some((u) => u.data?.contestHistory?.length > 0)}
+		<div class="rounded-2xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-md">
+			<h3 class="mb-4 text-lg font-bold text-white">Rating Comparison</h3>
+			<ContestRatingGraph
+				datasets={compareUsers
+					.filter((u) => u.data?.contestHistory && u.data.contestHistory.length > 0)
+					.map((u, i) => ({
+						label: u.handle,
+						color: USER_COLORS[i % USER_COLORS.length].solid,
+						data: u.data.contestHistory
+					}))}
+				variant="comparison"
+			/>
+		</div>
+	{/if}
 
 	<!-- Comparison Grid -->
 	{#if compareUsers.length >= 2}

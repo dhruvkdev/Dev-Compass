@@ -74,17 +74,18 @@
 	/* -----------------------------
      Status & Formatting
   ------------------------------ */
-	const isOnline =
-		info?.lastOnlineTimeSeconds && Date.now() / 1000 - info.lastOnlineTimeSeconds < 300;
-	const ratingChange = rating - maxRating;
+	let isOnline = $derived(
+		info?.lastOnlineTimeSeconds && Date.now() / 1000 - info.lastOnlineTimeSeconds < 300
+	);
+	let ratingChange = $derived(rating - maxRating);
 
 	function formatCompact(num: number): string {
 		if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
 		if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
 		return num.toString();
 	}
-	const isBelowMax = rating < maxRating;
-	const delta = rating - maxRating;
+	let isBelowMax = $derived(rating < maxRating);
+	let delta = $derived(rating - maxRating);
 </script>
 
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">

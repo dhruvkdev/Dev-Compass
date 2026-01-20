@@ -18,7 +18,19 @@ export interface LeetCodeStats {
     } | null;
     languages: LanguageStat[];
     recentSubmissions: RecentSubmission[];
+    contestHistory: ContestRatingHistory;
 }
+
+export type ContestRatingPoint = {
+    contestId: number; // Derived from title or generated
+    contestName: string;
+    date: number;      // unix timestamp
+    rating: number;
+    delta: number;
+    ranking: number;
+};
+
+export type ContestRatingHistory = ContestRatingPoint[];
 
 export interface SkillTag {
     tagName: string;
@@ -84,5 +96,24 @@ export interface GQLRecentSubmissionsResponse {
             statusDisplay: string;
             lang: string;
         }[];
+    };
+}
+
+export interface GQLContestHistoryResponse {
+    data: {
+        userContestRanking: {
+            attendedContestsCount: number;
+            rating: number;
+            globalRanking: number;
+        } | null; // Can be null if no contest history
+        userContestRankingHistory: {
+            attended: boolean;
+            rating: number;
+            ranking: number;
+            contest: {
+                title: string;
+                startTime: number;
+            };
+        }[] | null;
     };
 }

@@ -65,3 +65,22 @@ export const GET_RECENT_SUBMISSIONS = `
     }
   }
 `;
+
+export const GET_CONTEST_HISTORY = `
+  query getContestRankingData($username: String!) {
+    userContestRanking(username: $username) {
+      attendedContestsCount
+      rating
+      globalRanking
+    }
+    userContestRankingHistory(username: $username) {
+      attended
+      rating
+      ranking
+      contest {
+        title
+        startTime
+      }
+    }
+  }
+`;

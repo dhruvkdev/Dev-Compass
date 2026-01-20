@@ -156,3 +156,8 @@ export async function fetchAtCoderStats(username: string) {
         return null;
     }
 }
+
+// --- GFG (Placeholder) ---
+export async function fetchGFGStats(username: string) {
+    return null;
+}
