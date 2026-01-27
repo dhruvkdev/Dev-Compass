@@ -25,7 +25,7 @@
 	});
 </script>
 
-<div class="pt-6">
+<div class="pt-6 z-50">
 	{#if activeTab === 'Overview'}
 		<OverviewTab {data} />
 	{:else if activeTab === 'Analytics'}

@@ -50,13 +50,13 @@
 	];
 </script>
 
-<div class="min-h-screen bg-black text-white selection:bg-indigo-500/30">
+<div class="min-h-screen bg-black text-white selection:bg-indigo-500/30 overflow-hidden">
 	<!-- Hero Section -->
 	<section
 		class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 pt-20 text-center"
 	>
 		<!-- Background Elements -->
-		<div class="absolute inset-0 z-0">
+		<div class="absolute inset-0 z-0 overflow-hidden">
 			<!-- Rising Particles Effect -->
 			<RisingParticles particleCount={40} className="z-10" />
 			<div

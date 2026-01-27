@@ -19,7 +19,6 @@ export const actions = {
         if (await redis.get(cooldownKey)) {
             return fail(429, { message: "Analysis cool-down active. Please wait." });
         }
-
         try {
             // 3. Fetch Raw Data (Your "Rich Payload" logic here)
             const stats = await getRichPayload(userId);

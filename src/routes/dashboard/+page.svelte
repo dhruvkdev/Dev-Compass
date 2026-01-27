@@ -4,6 +4,8 @@
 	import { cubicOut } from 'svelte/easing';
 	import CodeforcesDashboard from '$lib/components/dashboard/codeforces/CodeforcesDashboard.svelte';
 	import { LeetCodeDashboard } from '$lib/components/dashboard/leetcode';
+	import RisingParticles from '$lib/components/ui/RisingParticles/index';
+	import { GithubDashboard } from '$lib/components/dashboard/github';
 
 	let { form } = $props();
 
@@ -18,30 +20,45 @@
 	];
 </script>
 
-<div class="min-h-screen bg-black pt-24 pb-20">
+<div class="relative min-h-screen bg-black pt-24 pb-20">
 	<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-		<!-- 1. Tabs -->
-		<div class="mb-8 flex justify-center">
-			<div class="inline-flex rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-md">
-				{#each tabs as tab}
-					<button
-						onclick={() => (activeTab = tab)}
-						class="relative rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 {activeTab ===
-						tab
-							? 'text-black'
-							: 'text-zinc-400 hover:text-white'}"
-					>
-						{#if activeTab === tab}
-							<div
-								class="absolute inset-0 rounded-full bg-white shadow-lg"
-								transition:slide|local={{ axis: 'x', duration: 300, easing: cubicOut }}
-							></div>
-						{/if}
-						<span class="relative z-10">{tab}</span>
-					</button>
-				{/each}
-			</div>
+		<!-- Background Elements -->
+		<div class="pointer-events-none absolute inset-0 z-0">
+		<!-- Rising Particles Effect -->
+			<RisingParticles particleCount={50} className="z-0" />
+
+			<div
+				class="absolute top-[-20%] left-[-10%] h-125 w-125 rounded-full bg-indigo-600/20 blur-[120px]"
+			></div>
+
+			<div
+				class="absolute right-[-10%] bottom-[-20%] h-125 w-125 rounded-full bg-purple-600/20 blur-[120px]"
+			></div>
 		</div>
+		<!-- 1. Tabs -->
+		{#if form?.platform !== 'github'}
+			<div transition:fade class="mb-8 flex justify-center">
+				<div class="inline-flex rounded-full border border-white/10 bg-white/5 p-1 backdrop-blur-md">
+					{#each tabs as tab}
+						<button
+							onclick={() => (activeTab = tab)}
+							class="relative rounded-full px-6 py-2 text-sm font-medium transition-all duration-300 {activeTab ===
+							tab
+								? 'text-black'
+								: 'text-zinc-400 hover:text-white'}"
+						>
+						{#if activeTab === tab}
+								<div
+									class="absolute inset-0 rounded-full bg-white shadow-lg"
+									transition:slide|local={{ axis: 'x', duration: 300, easing: cubicOut }}
+								></div>
+							{/if}
+							<span class="relative z-10">{tab}</span>
+						</button>
+					{/each}
+				</div>
+			</div>
+		{/if}
 
 		<!-- 2. Search & Filter -->
 		<div class="mx-auto mb-12 max-w-2xl">
@@ -114,6 +131,10 @@
 			{:else if form.platform === 'leetcode'}
 				<div transition:fade={{ duration: 400 }}>
 					<LeetCodeDashboard data={form.data} {activeTab} />
+				</div>
+			{:else if form.platform === 'github'}
+				<div transition:fade={{ duration: 400 }}>
+					<GithubDashboard data={form.data} {activeTab} />
 				</div>
 			{/if}
 		{/if}

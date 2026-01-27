@@ -2,78 +2,115 @@ import { env } from '$env/dynamic/private';
 
 import { leetCodeClient } from '$lib/server/leetcode/client';
 import type { LeetCodeStats } from '$lib/server/leetcode/types';
+import type { GithubStats } from '$lib/server/github/types';
 
 // Re-export type for use in other files if needed, or consumers should import from types
 export type { LeetCodeStats };
+type GithubGraphQLResponse = {
+  data?: {
+    user?: GithubStats;
+  };
+  errors?: { message: string }[];
+};
 
 export async function fetchLeetCodeStats(username: string): Promise<LeetCodeStats | null> {
     return leetCodeClient.fetchUser(username);
 }
 
-
-
-
 // --- GITHUB (GraphQL > REST) ---
-// REST API is bad for "Streaks". GraphQL gives us the Contribution Calendar.
-export async function fetchGithubStats(username: string, token: string) {
+export async function fetchGithubStats(username: string):Promise<GithubStats | null> {
     try {
         const query = `
-            query($username: String!) {
+            query ($username: String!) {
                 user(login: $username) {
-                    # 1. The Heatmap Data
+                    login
+                    createdAt
+                    followers { totalCount }
+
                     contributionsCollection {
                         contributionCalendar {
                             totalContributions
                             weeks {
                                 contributionDays {
-                                    contributionCount
                                     date
+                                    contributionCount
                                 }
                             }
                         }
+                        pullRequestContributions { totalCount }
+                        issueContributions { totalCount }
+                        pullRequestReviewContributions { totalCount }
                     }
-                    # 2. Top Languages (Weighted by size, not just count)
-                    repositories(first: 10, orderBy: {field: STARGAZERS, direction: DESC}, ownerAffiliations: OWNER) {
+
+                    repositories(
+                    first: 20,
+                    orderBy: { field: STARGAZERS, direction: DESC },
+                    ownerAffiliations: OWNER
+                    ) {
+                        totalCount  
                         nodes {
                             name
-                            languages(first: 3) {
-                                edges { size node { name } }
+                            stargazerCount
+                            forkCount
+                            createdAt
+                            isArchived
+                            languages(first: 5) {
+                            edges {
+                                size
+                                node { name }
                             }
                         }
+                        defaultBranchRef {
+                            target {
+                                ... on Commit {
+                                history(first: 0) {
+                                    totalCount
+                                }
+                            }
+                        }
+                        }
                     }
-                    # 3. Pinned items (Their best work)
+                    }
+
                     pinnedItems(first: 4, types: [REPOSITORY]) {
                         nodes {
                             ... on Repository {
-                                name
-                                description
-                                languages(first: 3) { nodes { name } }
+                            name
+                            description
+                            stargazerCount
+                            forkCount
+                            languages(first: 3) { nodes { name } }
                             }
                         }
                     }
                 }
             }
+
         `;
 
         const res = await fetch('https://api.github.com/graphql', {
             method: 'POST',
             headers: {
-                'Authorization': `bearer ${token}`, // Requires a generic GITHUB_TOKEN or user's token
+                'Authorization': `bearer ${env.GITHUB_PAT}`, // Requires a generic GITHUB_TOKEN or user's token
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ query, variables: { username } })
         });
 
-        const data = await res.json();
-        return data.data?.user || null;
-
+        const json = (await res.json()) as GithubGraphQLResponse;
+        if (json.errors?.length) {
+            console.error(json.errors);
+            return null;
+        }
+        return json.data?.user ?? null;
+        
     } catch (e) {
         console.error("GitHub GraphQL Error:", e);
         return null;
     }
 }
 
-// --- CODEFORCES (Full Implementation) ---
+// --- CODEFORCES ---
 export async function fetchCodeforcesStats(username: string) {
     try {
         const [userRes, ratingRes, statusRes] = await Promise.all([
