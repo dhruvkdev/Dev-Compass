@@ -16,7 +16,7 @@
     const weekWidth = cellSize + cellGap;
     
     // Process data into a map
-    let dataMap = $derived(new Map<string, number>(data.map(d => [d.date.split('T')[0], d.value])));
+    let dataMap = $derived(new Map<string, number>(data.map((d: { date: string; value: number }) => [d.date.split('T')[0], d.value])));
 
     // Generate last 52 weeks
     let weeks = $derived.by(() => {

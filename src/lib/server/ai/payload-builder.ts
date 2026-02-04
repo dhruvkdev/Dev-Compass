@@ -39,7 +39,7 @@ export async function getRichPayload(userId: string): Promise<RichPayload> {
     const [leetcode, codeforces, github, gfg, atcoder] = await Promise.all([
         handles['leetcode'] ? fetchLeetCodeStats(handles['leetcode']) : null,
         handles['codeforces'] ? fetchCodeforcesStats(handles['codeforces']) : null,
-        handles['github'] ? fetchGithubStats(handles['github'], githubToken || '') : null,
+        handles['github'] ? fetchGithubStats(handles['github']) : null,
         handles['geeksforgeeks'] ? fetchGFGStats(handles['geeksforgeeks']) : null,
         handles['atcoder'] ? fetchAtCoderStats(handles['atcoder']) : null
     ]);

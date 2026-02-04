@@ -6,7 +6,7 @@
     let { data } = $props<{ data: { date: Date; value: number }[] }>();
 
     // Process data to be sure
-    let chartData = $derived(data.sort((a, b) => a.date.getTime() - b.date.getTime()));
+    let chartData = $derived(data.sort((a: { date: Date; value: number }, b: { date: Date; value: number }) => a.date.getTime() - b.date.getTime()));
 </script>
 
 <div class="h-[200px] w-full p-4 rounded-xl border border-[#30363d] bg-[#161b22]">

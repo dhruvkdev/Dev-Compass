@@ -26,7 +26,7 @@
 		{
 			title: 'DSA Mastery',
 			description:
-				'Track your progress across LeetCode and GeeksforGeeks. Get personalized recommendations to fill your knowledge gaps.',
+				'Track your progress across LeetCode and Codeforces. Get personalized recommendations to fill your knowledge gaps.',
 			icon: Code,
 			color: 'text-blue-400',
 			bg: 'bg-blue-400/10'
@@ -34,7 +34,7 @@
 		{
 			title: 'Competitive Programming',
 			description:
-				'Sync with Codeforces and CodeChef. Analyze your contest performance and visualize your rating growth.',
+				'Sync with Codeforces and LeetCode. Analyze your contest performance and visualize your rating growth.',
 			icon: Trophy,
 			color: 'text-yellow-400',
 			bg: 'bg-yellow-400/10'

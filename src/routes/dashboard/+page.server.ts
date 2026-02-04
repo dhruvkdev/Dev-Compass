@@ -1,6 +1,81 @@
-import { fail } from '@sveltejs/kit';
-import type { Actions } from './$types';
-import { fetchCodeforcesStats, fetchGithubStats, fetchLeetCodeStats, processCodeforcesWeakness } from '$lib/server/platforms';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { db } from '$lib/server/db';
+import { platform_handles } from '$lib/server/db/schema';
+import { eq, isNotNull, and } from 'drizzle-orm';
+import { 
+    getCodeforcesStatsCached, 
+    getLeetCodeStatsCached, 
+    getGithubStatsCached 
+} from '$lib/server/cache';
+import { processCodeforcesWeakness } from '$lib/server/platforms';
+
+// Types for platform data
+type PlatformData = {
+    platform: string;
+    handle: string;
+    data: unknown;
+};
+
+export const load: PageServerLoad = async ({ locals }) => {
+    if (!locals.user) throw redirect(302, '/signin');
+
+    const userId = locals.user.id;
+
+    // Fetch verified platforms from database
+    const verifiedPlatforms = await db
+        .select()
+        .from(platform_handles)
+        .where(
+            and(
+                eq(platform_handles.userId, userId),
+                isNotNull(platform_handles.verifiedAt)
+            )
+        );
+
+    if (verifiedPlatforms.length === 0) {
+        return { platforms: [], hasVerifiedPlatforms: false };
+    }
+
+    // Fetch stats for each verified platform in parallel
+    const platformPromises = verifiedPlatforms.map(async (p): Promise<PlatformData | null> => {
+        try {
+            switch (p.platform) {
+                case 'github': {
+                    const data = await getGithubStatsCached(p.handle);
+                    return data ? { platform: 'github', handle: p.handle, data } : null;
+                }
+                case 'codeforces': {
+                    const stats = await getCodeforcesStatsCached(p.handle);
+                    if (!stats) return null;
+                    const weakTags = processCodeforcesWeakness(stats.submissions);
+                    return { 
+                        platform: 'codeforces', 
+                        handle: p.handle, 
+                        data: { ...stats, weakTags } 
+                    };
+                }
+                case 'leetcode': {
+                    const data = await getLeetCodeStatsCached(p.handle);
+                    return data ? { platform: 'leetcode', handle: p.handle, data } : null;
+                }
+                default:
+                    return null;
+            }
+        } catch (e) {
+            console.error(`Failed to fetch ${p.platform} stats for ${p.handle}:`, e);
+            return null;
+        }
+    });
+
+    const results = await Promise.all(platformPromises);
+    const platforms = results.filter((r): r is PlatformData => r !== null);
+
+    return { 
+        platforms, 
+        hasVerifiedPlatforms: true 
+    };
+};
 
 export const actions = {
     getPlatformStats: async ({ request }) => {
@@ -13,7 +88,7 @@ export const actions = {
         }
 
         if (platform === 'codeforces') {
-            const stats = await fetchCodeforcesStats(username.toString());
+            const stats = await getCodeforcesStatsCached(username.toString());
             if (!stats) {
                 return fail(404, { message: 'User not found or API error' });
             }
@@ -31,7 +106,7 @@ export const actions = {
             };
         }
         else if(platform == 'leetcode'){
-            const stats = await fetchLeetCodeStats(username.toString());
+            const stats = await getLeetCodeStatsCached(username.toString());
             if (!stats){
                 return fail(404, { message: 'User not found or API error' });
             }
@@ -44,7 +119,7 @@ export const actions = {
             };
         }
         else if(platform == 'github'){
-            const stats = await fetchGithubStats(username.toString());
+            const stats = await getGithubStatsCached(username.toString());
             if (!stats){
                 return fail(404, { message: 'User not found or API error' });
             }

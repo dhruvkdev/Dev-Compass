@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { Motion } from 'svelte-motion';
 
-	export let particleCount = 50;
-	export let className = '';
+	interface Props {
+		particleCount?: number;
+		className?: string;
+	}
+
+	let { particleCount = 50, className = '' }: Props = $props();
 
 	type Particle = {
 		id: number;
@@ -14,7 +17,7 @@
 		color: string;
 	};
 
-	let particles: Particle[] = [];
+	let particles = $state<Particle[]>([]);
 
 	onMount(() => {
 		const colors = ['#6366f1', '#a855f7', '#ec4899', '#ffffff']; // Indigo, Purple, Pink, White
@@ -29,29 +32,41 @@
 	});
 </script>
 
-<div class={`pointer-events-none absolute inset-0 overflow-hidden ${className}`}>
+<div class="pointer-events-none absolute inset-0 overflow-hidden {className}">
 	{#each particles as particle (particle.id)}
-		<Motion
-			initial={{ y: '110vh', opacity: 0 }}
-			animate={{ y: '-10vh', opacity: [0, 1, 1, 0] }}
-			transition={{
-				duration: particle.duration,
-				ease: 'linear',
-				repeat: Infinity,
-				delay: particle.delay
-			}}
-			let:motion
-		>
-			<div
-				use:motion
-				class="absolute rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
-				style="
+		<div
+			class="absolute rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-rise"
+			style="
                     left: {particle.left};
                     width: {particle.size}px;
                     height: {particle.size}px;
                     background-color: {particle.color};
+					animation-duration: {particle.duration}s;
+					animation-delay: {particle.delay}s;
                 "
-			></div>
-		</Motion>
+		></div>
 	{/each}
 </div>
+
+<style>
+	@keyframes rise {
+		0% {
+			transform: translateY(110vh);
+			opacity: 0;
+		}
+		20% {
+			opacity: 1;
+		}
+		80% {
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(-10vh);
+			opacity: 0;
+		}
+	}
+	.animate-rise {
+		animation: rise linear infinite;
+		animation-fill-mode: backwards;
+	}
+</style>

@@ -1,6 +1,5 @@
 import { GET_USER_PROFILE, GET_SKILL_STATS, GET_LANGUAGE_STATS, GET_RECENT_SUBMISSIONS, GET_CONTEST_HISTORY } from './queries';
 import type { LeetCodeStats, GQLUserProfileResponse, GQLSkillStatsResponse, GQLLanguageStatsResponse, GQLRecentSubmissionsResponse, GQLContestHistoryResponse, ContestRatingHistory } from './types';
-import { leetCodeCache } from './cache';
 
 const LEETCODE_ENDPOINT = 'https://leetcode.com/graphql';
 
@@ -55,13 +54,6 @@ class LeetCodeClient {
     }
 
     public async fetchUser(username: string): Promise<LeetCodeStats | null> {
-        // 1. Check Cache
-        const cached = await leetCodeCache.get(username);
-        if (cached !== undefined && cached && cached.contestHistory) {
-            console.log(`[LeetCode] Cache hit for ${username}`);
-            return cached;
-        }
-
         console.log(`Fetching LeetCode stats for ${username}...`);
 
         // 2. Parallel Fetch
@@ -75,7 +67,6 @@ class LeetCodeClient {
 
         // 3. Validation
         if (!profileRes?.data?.matchedUser) {
-            await leetCodeCache.set(username, null); // Cache 404
             return null;
         }
 
@@ -137,8 +128,6 @@ class LeetCodeClient {
             contestHistory
         };
 
-        // 5. Update Cache
-        await leetCodeCache.set(username, stats);
         return stats;
     }
 }

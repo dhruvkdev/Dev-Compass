@@ -1,6 +1,6 @@
 {
 	"extends": "./.svelte-kit/tsconfig.json",
-	"include": ["src/**/*", "src/app.d.ts"],
+	"include": ["src/**/*", "src/app.d.ts", ".svelte-kit/ambient.d.ts", ".svelte-kit/types/**/$types.d.ts"],
 	"compilerOptions": {
 		"allowArbitraryExtensions": true,
 		"rewriteRelativeImportExtensions": true,

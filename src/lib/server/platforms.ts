@@ -110,15 +110,30 @@ export async function fetchGithubStats(username: string):Promise<GithubStats | n
     }
 }
 
+
 // --- CODEFORCES ---
 export async function fetchCodeforcesStats(username: string) {
     try {
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Dev-Compass-App)' // Sometimes helps bypass basic filters
+        };
         const [userRes, ratingRes, statusRes] = await Promise.all([
-            fetch(`https://codeforces.com/api/user.info?handles=${username}`),
-            fetch(`https://codeforces.com/api/user.rating?handle=${username}`),
-            fetch(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=5000`)
+            fetch(`https://codeforces.com/api/user.info?handles=${username}`, { headers }),
+            fetch(`https://codeforces.com/api/user.rating?handle=${username}`, { headers }),
+            fetch(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=5000`, { headers })
         ]);
+        // 1. Check if the response is actually OK (status 200-299)
+        if (!userRes.ok || !ratingRes.ok || !statusRes.ok) {
+            console.error('Codeforces is having issues (Non-200 response)');
+            return null;
+        }
 
+        // 2. Double check that we actually got JSON and not an HTML error page
+        const contentType = userRes.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            console.error('Codeforces returned HTML instead of JSON (likely a 504 or Cloudflare block)');
+            return null;
+        }
         const userData = await userRes.json();
         const ratingData = await ratingRes.json();
         const statusData = await statusRes.json();

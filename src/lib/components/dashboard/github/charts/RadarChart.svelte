@@ -39,12 +39,12 @@
   // Generate grid lines (web)
   let ticks = [20, 40, 60, 80, 100];
   
-  let points = $derived(data.map((d, i) => {
+  let points = $derived(data.map((d: any, i: number) => {
       const coords = getCoordinates(i, data.length, d[y], max);
       return { ...coords, ...d };
   }));
 
-  let pathData = $derived(points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ') + ' Z');
+  let pathData = $derived(points.map((p: { x: number; y: number }, i: number) => `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`).join(' ') + ' Z');
 </script>
 
 <div class="h-[300px] w-full flex justify-center items-center">

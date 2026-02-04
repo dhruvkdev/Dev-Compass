@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { db } from '$lib/server/db';
-import { redis } from '$lib/server/redis';
+import { redis } from '$lib/server/redis/client';
 import { ai_insights } from '$lib/server/db/schema';
 import { getRichPayload } from '$lib/server/ai/payload-builder';
 import { fetchLeetCodeStats, fetchCodeforcesStats, fetchGithubStats, fetchAtCoderStats } from '$lib/server/platforms';
@@ -24,11 +24,11 @@ export const actions = {
             const stats = await getRichPayload(userId);
 
             // 4. Call n8n
-            const response = await fetch(env.N8N_WEBHOOK_URL, {
+            const response = await fetch(env.N8N_WEBHOOK_URL!, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'x-secret-key': env.N8N_SECRET_KEY
+                    'x-secret-key': env.N8N_SECRET_KEY!
                 },
                 body: JSON.stringify({ userId, stats }) // Pass your real stats here
             });
@@ -82,7 +82,7 @@ export const actions = {
             let stats = null;
             if (platform === 'leetcode') stats = await fetchLeetCodeStats(targetHandle);
             else if (platform === 'codeforces') stats = await fetchCodeforcesStats(targetHandle);
-            else if (platform === 'github') stats = await fetchGithubStats(targetHandle, ''); // Public fetch
+            else if (platform === 'github') stats = await fetchGithubStats(targetHandle); // Public fetch
             else if (platform === 'atcoder') stats = await fetchAtCoderStats(targetHandle);
 
             if (!stats) return fail(404, { message: "User not found or API error." });
