@@ -56,7 +56,6 @@
 		"vite": "^7.2.6"
 	},
 	"dependencies": {
-		"@neondatabase/serverless": "^1.0.2",
 		"@node-rs/argon2": "^2.0.2",
 		"@octokit/graphql": "^9.0.3",
 		"@tabler/icons-svelte": "^3.36.0",

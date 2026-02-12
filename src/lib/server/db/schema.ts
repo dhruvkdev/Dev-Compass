@@ -3,6 +3,7 @@ import { pgTable, text, integer, timestamp, boolean, uniqueIndex, pgEnum, uuid, 
 
 export const platformEnum = pgEnum('platform', ['leetcode', 'codeforces', 'codechef', 'github', 'geeksforgeeks', 'atcoder', 'hackerrank', 'hackerearth', 'cses', 'usaco']);
 export const contextType = pgEnum('contextType', ['dsa_roadmap', 'cp_strategy', 'dev_suggestion', 'global_summary']);
+export const difficultyEnum = pgEnum('difficulty', ['easy', 'medium', 'hard']);
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
@@ -89,17 +90,26 @@ export const ai_insights = pgTable("ai_insights", {
 ]);
 
 export const problems = pgTable("problems", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	platform: platformEnum().notNull(),
-	title: text("title").notNull(),
-	slug: text("slug").notNull(),
-	url: text("url").notNull(),
-	difficulty: pgEnum("difficulty", ["easy", "medium", "hard"])("difficulty"),
-	rating: integer("rating"),
-	tags: text("tags").array().notNull(),
-	createdAt: timestamp("created_at").notNull().defaultNow(),
-	is_active: boolean("is_active").notNull().default(true),
-});
+  id: uuid("id").defaultRandom().primaryKey(),
+
+  platform: platformEnum().notNull(),
+  externalId: text("external_id").notNull(), // VERY IMPORTANT
+
+  title: text("title").notNull(),
+  slug: text("slug").notNull(),
+  url: text("url").notNull(),
+
+  difficulty: difficultyEnum("difficulty"),
+  rating: integer("rating"),
+
+  tags: text("tags").array().notNull(),
+
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  is_active: boolean("is_active").notNull().default(true),
+}, (table) => [
+  uniqueIndex("platform_external_id_unique").on(table.platform, table.externalId)
+]);
+
 
 export const github_task_templates = pgTable("github_task_templates", {
 	id: text("id").primaryKey(),
@@ -112,7 +122,7 @@ export const github_task_templates = pgTable("github_task_templates", {
 export const user_recommended_problems = pgTable("user_recommended_problems", {
 	id: text("id").primaryKey(),
 	userId: text("user_id").notNull().references(() => user.id),
-	problemId: text("problem_id").notNull().references(() => problems.id),
+	problemId: uuid("problem_id").notNull().references(() => problems.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow()
 }, (table) => [
