@@ -46,8 +46,10 @@ export const load: PageServerLoad = async ({ locals }) => {
                     return data ? { platform: 'github', handle: p.handle, data } : null;
                 }
                 case 'codeforces': {
-                    const stats = await getCodeforcesStatsCached(p.handle);
-                    if (!stats) return null;
+                    const result = await getCodeforcesStatsCached(p.handle);
+                    if (!result.success) return null; // Or handle error in UI if needed, but for now filtering out failed ones from main view might be safer or we could return error state
+                    
+                    const stats = result.data;
                     const weakTags = processCodeforcesWeakness(stats.submissions);
                     return { 
                         platform: 'codeforces', 
@@ -88,10 +90,13 @@ export const actions = {
         }
 
         if (platform === 'codeforces') {
-            const stats = await getCodeforcesStatsCached(username.toString());
-            if (!stats) {
-                return fail(404, { message: 'User not found or API error' });
+            const result = await getCodeforcesStatsCached(username.toString());
+            
+            if (!result.success) {
+                 return fail(400, { message: result.error });
             }
+
+            const stats = result.data;
 
             // Process additional stats
             const weakTags = processCodeforcesWeakness(stats.submissions);

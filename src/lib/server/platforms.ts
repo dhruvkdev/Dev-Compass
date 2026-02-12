@@ -112,7 +112,12 @@ export async function fetchGithubStats(username: string):Promise<GithubStats | n
 
 
 // --- CODEFORCES ---
-export async function fetchCodeforcesStats(username: string) {
+// --- CODEFORCES ---
+export type CodeforcesResult = 
+    | { success: true; data: any }
+    | { success: false; error: string };
+
+export async function fetchCodeforcesStats(username: string): Promise<CodeforcesResult> {
     try {
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Dev-Compass-App)' // Sometimes helps bypass basic filters
@@ -122,32 +127,47 @@ export async function fetchCodeforcesStats(username: string) {
             fetch(`https://codeforces.com/api/user.rating?handle=${username}`, { headers }),
             fetch(`https://codeforces.com/api/user.status?handle=${username}&from=1&count=5000`, { headers })
         ]);
-        // 1. Check if the response is actually OK (status 200-299)
+
+        // 1. Check for specific status codes
+        if (userRes.status === 503 || ratingRes.status === 503 || statusRes.status === 503) {
+             console.error('Codeforces 503 Service Unavailable');
+             return { success: false, error: 'Codeforces is having issues' };
+        }
+
         if (!userRes.ok || !ratingRes.ok || !statusRes.ok) {
             console.error('Codeforces is having issues (Non-200 response)');
-            return null;
+            return { success: false, error: 'Codeforces is having issues' };
         }
 
         // 2. Double check that we actually got JSON and not an HTML error page
         const contentType = userRes.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             console.error('Codeforces returned HTML instead of JSON (likely a 504 or Cloudflare block)');
-            return null;
+            return { success: false, error: 'Codeforces is having issues' };
         }
+        
         const userData = await userRes.json();
         const ratingData = await ratingRes.json();
         const statusData = await statusRes.json();
 
-        if (userData.status !== 'OK') return null;
+        if (userData.status !== 'OK') {
+             if (userData.comment && userData.comment.includes('not found')) {
+                 return { success: false, error: 'User not found on Codeforces' };
+             }
+             return { success: false, error: 'Codeforces is having issues' };
+        }
 
         return {
-            info: userData.result[0],
-            rating: ratingData.status === 'OK' ? ratingData.result : [],
-            submissions: statusData.status === 'OK' ? statusData.result : []
+            success: true,
+            data: {
+                info: userData.result[0],
+                rating: ratingData.status === 'OK' ? ratingData.result : [],
+                submissions: statusData.status === 'OK' ? statusData.result : []
+            }
         };
     } catch (e) {
         console.error('Codeforces Fetch Error:', e);
-        return null;
+        return { success: false, error: 'Codeforces is having issues' };
     }
 }
 

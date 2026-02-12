@@ -36,13 +36,16 @@ export async function getRichPayload(userId: string): Promise<RichPayload> {
     }
 
     // 3. Fetch Data from Platforms (in parallel)
-    const [leetcode, codeforces, github, gfg, atcoder] = await Promise.all([
+    // 3. Fetch Data from Platforms (in parallel)
+    const [leetcode, codeforcesResult, github, gfg, atcoder] = await Promise.all([
         handles['leetcode'] ? fetchLeetCodeStats(handles['leetcode']) : null,
         handles['codeforces'] ? fetchCodeforcesStats(handles['codeforces']) : null,
         handles['github'] ? fetchGithubStats(handles['github']) : null,
         handles['geeksforgeeks'] ? fetchGFGStats(handles['geeksforgeeks']) : null,
         handles['atcoder'] ? fetchAtCoderStats(handles['atcoder']) : null
     ]);
+
+    const codeforces = codeforcesResult?.success ? codeforcesResult.data : null;
 
     // 4. Construct Payload
     return {

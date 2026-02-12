@@ -25,13 +25,25 @@ export async function verifyCodeforcesToken(
     );
 
     if (!res.ok) {
-      return { verified: false, error: 'Failed to fetch Codeforces profile' };
+        if (res.status >= 500) {
+             return { verified: false, error: 'Codeforces is having issues' };
+        }
+         return { verified: false, error: 'Failed to fetch Codeforces profile' };
+    }
+
+    const contentType = res.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+         return { verified: false, error: 'Codeforces is having issues' };
     }
 
     const data = await res.json();
 
     if (data.status !== 'OK' || !data.result || data.result.length === 0) {
-      return { verified: false, error: 'User not found on Codeforces' };
+      if(data.comment && data.comment.includes('handle: User with name') && data.comment.includes('not found')) {
+          return { verified: false, error: 'User not found on Codeforces' };
+      }
+      // If status is FAILED but not user not found, it might be an internal issue
+       return { verified: false, error: 'Codeforces is having issues' };
     }
 
     const user = data.result[0];
@@ -55,6 +67,6 @@ export async function verifyCodeforcesToken(
     };
   } catch (e) {
     console.error('Codeforces verification error:', e);
-    return { verified: false, error: 'Network error while verifying' };
+    return { verified: false, error: 'Codeforces is having issues' };
   }
 }

@@ -29,9 +29,12 @@
         }
     });
 
+    // Track if we are viewing manual search results
+    let viewingManualSearch = $state(!!form?.success);
+
     // Get data for currently active platform
     const activePlatformData = $derived(
-        form?.success 
+        viewingManualSearch && form?.success
             ? { platform: form.platform, data: form.data }
             : verifiedPlatforms.find((p: { platform: string }) => p.platform === activePlatformId)
     );
@@ -61,7 +64,10 @@
                     {#each verifiedPlatforms as platform}
                         {@const p = platforms.find(pl => pl.id === platform.platform)}
                         <button
-                            onclick={() => { activePlatformId = platform.platform; }}
+                            onclick={() => { 
+                                activePlatformId = platform.platform;
+                                viewingManualSearch = false; 
+                            }}
                             class="relative rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 {activePlatformId === platform.platform
                                 ? 'text-black'
                                 : 'text-zinc-400 hover:text-white'}"
@@ -103,9 +109,8 @@
             </div>
         {/if}
 
-        <!-- Manual Lookup Form (collapsed if user has verified platforms) -->
-        {#if verifiedPlatforms.length === 0 || !activePlatformData}
-            <div class="mx-auto mb-12 max-w-2xl">
+        <!-- Manual Lookup Form -->
+        <div class="mx-auto mb-12 max-w-2xl">
                 {#if verifiedPlatforms.length === 0}
                     <p class="mb-4 text-center text-sm text-gray-400">
                         No verified platforms yet. <a href="/settings" class="text-indigo-400 hover:underline">Verify your accounts</a> for automatic analysis, or search manually below.
@@ -119,6 +124,7 @@
                         return async ({ update }) => {
                             await update();
                             loading = false;
+                            viewingManualSearch = true;
                         };
                     }}
                     class="relative flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-900/50 p-2 shadow-2xl backdrop-blur-xl transition-all focus-within:border-indigo-500/50 focus-within:ring-2 focus-within:ring-indigo-500/20"
@@ -178,7 +184,7 @@
                     </div>
                 {/if}
             </div>
-        {/if}
+
 
         <!-- Dashboard Display -->
         {#if activePlatformData}

@@ -81,7 +81,11 @@ export const actions = {
         try {
             let stats = null;
             if (platform === 'leetcode') stats = await fetchLeetCodeStats(targetHandle);
-            else if (platform === 'codeforces') stats = await fetchCodeforcesStats(targetHandle);
+            else if (platform === 'codeforces') {
+                const result = await fetchCodeforcesStats(targetHandle);
+                if (result.success) stats = result.data;
+                else return fail(400, { message: result.error }); // Return specific error
+            }
             else if (platform === 'github') stats = await fetchGithubStats(targetHandle); // Public fetch
             else if (platform === 'atcoder') stats = await fetchAtCoderStats(targetHandle);
 

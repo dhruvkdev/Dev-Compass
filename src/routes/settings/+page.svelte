@@ -11,8 +11,8 @@
   let copiedToken = $state(false);
 
   // Form inputs
-  let codeforcesHandle = $state(data.handles.codeforces?.handle ?? '');
-  let leetcodeHandle = $state(data.handles.leetcode?.handle ?? '');
+  let codeforcesHandle = $derived(data.handles.codeforces?.handle ?? '');
+  let leetcodeHandle = $derived(data.handles.leetcode?.handle ?? '');
 
   // Active verification panel
   let activePanel = $state<string | null>(null);
@@ -343,7 +343,7 @@
                   <div class="space-y-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                      <div class="rounded-lg border border-white/5 bg-black/20 p-4">
                       <p class="mb-2 text-sm text-gray-300">
-                        Copy this token to your <strong class="text-white">LeetCode Summary</strong>:
+                        Copy this token to your <strong class="text-white">LeetCode README</strong>:
                       </p>
                       
                       <div class="flex items-center gap-2">
@@ -368,7 +368,7 @@
                       <p>Instructions:</p>
                       <ol class="mt-2 list-inside list-decimal space-y-1 pl-1">
                         <li>Go to <a href="https://leetcode.com/profile/" target="_blank" rel="noopener noreferrer" class="text-yellow-400 hover:text-yellow-300 hover:underline inline-flex items-center gap-0.5">LeetCode Profile <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg></a></li>
-                        <li>Edit Profile and paste the token in the <strong>Summary</strong> field.</li>
+                        <li>Edit Profile and paste the token in the <strong>README</strong> field.</li>
                         <li>Save changes.</li>
                       </ol>
                     </div>
