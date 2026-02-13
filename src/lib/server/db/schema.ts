@@ -103,6 +103,9 @@ export const problems = pgTable("problems", {
   rating: integer("rating"),
 
   tags: text("tags").array().notNull(),
+  isPaid: boolean("is_paid").notNull().default(false),
+  isNeetcode: boolean("is_neetcode").default(false),
+  isStriver: boolean("is_striver").default(false),
 
   createdAt: timestamp("created_at").notNull().defaultNow(),
   is_active: boolean("is_active").notNull().default(true),

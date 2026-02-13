@@ -2,52 +2,20 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
 import { platform_handles } from '$lib/server/db/schema';
-import { and, eq, gte, isNotNull, lte, notInArray, sql } from "drizzle-orm";
-import { getCodeforcesProblems, getCodeforcesProblemsByRating } from "$lib/server/recommendations/codeforces";
-import { scoreProblems } from "$lib/server/recommendations/score";
-
-
+import { eq, isNotNull, and } from 'drizzle-orm';
 import { 
     getCodeforcesStatsCached, 
     getLeetCodeStatsCached, 
     getGithubStatsCached 
 } from '$lib/server/cache';
 import { processCodeforcesWeakness } from '$lib/server/platforms';
-import { log } from 'console';
-import { get } from 'http';
 
+// Types for platform data
 type PlatformData = {
     platform: string;
     handle: string;
     data: unknown;
 };
-
-type CodeforcesUserProfile = {
-  rating: number;
-  maxRating: number;
-  weakTags: string[];
-  solvedProblemIds: Set<number>;
-};
-
-function getTargetRating(userRating: number) {
-  if (userRating < 1200) return userRating + 100;
-  if (userRating < 1600) return userRating + 150;
-  if (userRating < 2000) return userRating + 200;
-  return userRating + 250;
-}
-
-function getAttemptedProblemIds(submissions: any[]): Set<string> {
-    const attempted = new Set<string>();
-
-    for (const sub of submissions) {
-        if (!sub.problem?.contestId || !sub.problem?.index) continue;
-        const id = `${sub.problem.contestId}-${sub.problem.index}`;
-        attempted.add(id);
-    }
-
-    return attempted;
-}
-
 
 export const load: PageServerLoad = async ({ locals }) => {
     if (!locals.user) throw redirect(302, '/signin');
@@ -81,25 +49,12 @@ export const load: PageServerLoad = async ({ locals }) => {
                     const result = await getCodeforcesStatsCached(p.handle);
                     if (!result.success) return null; // Or handle error in UI if needed, but for now filtering out failed ones from main view might be safer or we could return error state
                     
-                    const cfProblems = await getCodeforcesProblems();
-                    // console.log(cfProblems);
-                    const currentRating = Math.max(Number((result.data as any).info.rating), 800);
-                    const target = getTargetRating(currentRating);
                     const stats = result.data;
                     const weakTags = processCodeforcesWeakness(stats.submissions);
-                    // console.log(weakTags);
-                    const weakTagNames = weakTags.map(t => t.tag);
-                    // console.log(weakTagNames);
-                    
-                    const attemptedProblemIds = getAttemptedProblemIds(stats.submissions);
-                    // console.log(Array.from(attemptedProblemIds));
-                    const cfProblemsByRatingInitial = await getCodeforcesProblemsByRating(target - 100, target + 100, Array.from(attemptedProblemIds), weakTagNames);
-                    const cfProblemsByRating = scoreProblems(cfProblemsByRatingInitial, weakTagNames, target, 3);
-
                     return { 
                         platform: 'codeforces', 
-                        handle: p.handle,
-                        data: { ...stats, weakTags, cfProblemsByRating} 
+                        handle: p.handle, 
+                        data: { ...stats, weakTags } 
                     };
                 }
                 case 'leetcode': {
@@ -114,13 +69,74 @@ export const load: PageServerLoad = async ({ locals }) => {
             return null;
         }
     });
+
     const results = await Promise.all(platformPromises);
     const platforms = results.filter((r): r is PlatformData => r !== null);
-    
 
     return { 
         platforms, 
-        hasVerifiedPlatforms: true
+        hasVerifiedPlatforms: true 
     };
 };
 
+export const actions = {
+    getPlatformStats: async ({ request }) => {
+        const data = await request.formData();
+        const platform = data.get('platform');
+        const username = data.get('username');
+
+        if (!platform || !username) {
+            return fail(400, { message: 'Platform and username are required' });
+        }
+
+        if (platform === 'codeforces') {
+            const result = await getCodeforcesStatsCached(username.toString());
+            
+            if (!result.success) {
+                 return fail(400, { message: result.error });
+            }
+
+            const stats = result.data;
+
+            // Process additional stats
+            const weakTags = processCodeforcesWeakness(stats.submissions);
+
+            return {
+                success: true,
+                platform: 'codeforces',
+                data: {
+                    ...stats,
+                    weakTags
+                }
+            };
+        }
+        else if(platform == 'leetcode'){
+            const stats = await getLeetCodeStatsCached(username.toString());
+            if (!stats){
+                return fail(404, { message: 'User not found or API error' });
+            }
+            return {
+                success: true,
+                platform: 'leetcode',
+                data: {
+                    ...stats
+                }
+            };
+        }
+        else if(platform == 'github'){
+            const stats = await getGithubStatsCached(username.toString());
+            if (!stats){
+                return fail(404, { message: 'User not found or API error' });
+            }
+            return {
+                success: true,
+                platform: 'github',
+                data: {
+                    ...stats
+                }
+            };
+        }
+
+        return fail(400, { message: 'Platform not supported yet' });
+    }
+} satisfies Actions;

@@ -62,7 +62,7 @@
 
 		<!-- Desktop Nav -->
 		<div class="hidden items-center gap-1 md:flex">
-			{#each ['Home', 'Dashboard', 'Explore'] as item}
+			{#each ['Home', 'Dashboard', 'Analysis'] as item}
 				<a
 					href={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
 					class="group relative rounded-full px-4 py-2 text-sm font-medium text-zinc-400 transition-colors hover:text-white"
@@ -118,9 +118,9 @@
 								on:click={closeMenus}>Dashboard</a
 							>
 							<a
-								href="/settings"
+								href="/verify"
 								class="block rounded-lg px-3 py-2 text-sm text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-								on:click={closeMenus}>Settings</a
+								on:click={closeMenus}>Verify</a
 							>
 							<button
 								on:click={handleSignOut}
@@ -184,7 +184,7 @@
 			class="mt-2 overflow-hidden rounded-3xl border border-white/10 bg-black/80 p-4 shadow-2xl backdrop-blur-xl md:hidden"
 		>
 			<div class="flex flex-col space-y-1">
-				{#each ['Home', 'Dashboard', 'Explore'] as item}
+				{#each ['Home', 'Dashboard', 'Analysis'] as item}
 					<a
 						href={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
 						class="rounded-xl px-4 py-3 text-base font-medium text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
