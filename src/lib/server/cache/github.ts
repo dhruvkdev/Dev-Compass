@@ -2,7 +2,7 @@ import { fetchGithubStats } from '$lib/server/platforms';
 import { getCache, setCache } from '$lib/server/redis/helpers';
 import { redisKeys } from '$lib/server/redis/keys';
 
-const GITHUB_TTL = 60 * 60 * 2; // 2 hours
+const GITHUB_TTL = 60 * 60 * 24 ; // 1 Day
 
 export async function getGithubStatsCached(username: string) {
   const key = redisKeys.github(username);

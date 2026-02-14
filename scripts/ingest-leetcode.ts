@@ -167,7 +167,7 @@ async function upsertBatch(batch: any[]) {
   }
 }
 
-main().catch((err) => {
+main().catch((err: unknown) => {
   console.error(err);
   process.exit(1);
 });

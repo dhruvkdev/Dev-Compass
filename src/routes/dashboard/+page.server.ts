@@ -4,6 +4,8 @@ import { db } from '$lib/server/db';
 import { platform_handles } from '$lib/server/db/schema';
 import { and, eq, gte, isNotNull, lte, notInArray, sql } from "drizzle-orm";
 import { getCodeforcesProblems, getCodeforcesProblemsByRating } from "$lib/server/recommendations/codeforces";
+import {  getLeetcodeProblemsScored } from "$lib/server/recommendations/leetcode";
+import { getLeetcodeTargetDifficulties, getSolvedLeetcodeSlugs, processLeetcodeWeakness } from "$lib/utils/platforms/leetcode";
 import { scoreProblems } from "$lib/server/recommendations/score";
 
 
@@ -16,11 +18,9 @@ import { processCodeforcesWeakness } from '$lib/server/platforms';
 import { log } from 'console';
 import { get } from 'http';
 
-type PlatformData = {
-    platform: string;
-    handle: string;
-    data: unknown;
-};
+import type { PlatformData, CodeforcesDashboardData } from '$lib/types';
+import { normalizeTag } from '$lib/utils/normalise';
+
 
 type CodeforcesUserProfile = {
   rating: number;
@@ -66,10 +66,18 @@ export const load: PageServerLoad = async ({ locals }) => {
         );
 
     if (verifiedPlatforms.length === 0) {
-        return { platforms: [], hasVerifiedPlatforms: false };
+        return { 
+            platforms: [], 
+            hasVerifiedPlatforms: false, 
+            leetcodeSync: null 
+        };
     }
 
     // Fetch stats for each verified platform in parallel
+    let leetcodeGapDetected = false;
+    let leetcodeLastSyncedAtISO: string | null = null;
+    let leetcodeNeedsInitialImport = false;
+
     const platformPromises = verifiedPlatforms.map(async (p): Promise<PlatformData | null> => {
         try {
             switch (p.platform) {
@@ -94,7 +102,8 @@ export const load: PageServerLoad = async ({ locals }) => {
                     const attemptedProblemIds = getAttemptedProblemIds(stats.submissions);
                     // console.log(Array.from(attemptedProblemIds));
                     const cfProblemsByRatingInitial = await getCodeforcesProblemsByRating(target - 100, target + 100, Array.from(attemptedProblemIds), weakTagNames);
-                    const cfProblemsByRating = scoreProblems(cfProblemsByRatingInitial, weakTagNames, target, 3);
+                    const cfProblemsByRating = scoreProblems(cfProblemsByRatingInitial, weakTagNames, target, 3)
+                        .map(p => ({ ...p, platform: 'codeforces' as const, score: p.score ?? 0 }));
 
                     return { 
                         platform: 'codeforces', 
@@ -103,8 +112,31 @@ export const load: PageServerLoad = async ({ locals }) => {
                     };
                 }
                 case 'leetcode': {
-                    const data = await getLeetCodeStatsCached(p.handle);
-                    return data ? { platform: 'leetcode', handle: p.handle, data } : null;
+                    const result = await getLeetCodeStatsCached(p.handle, userId);
+                    if (!result) return null;
+
+                    leetcodeGapDetected = result.gapDetected;
+                    leetcodeLastSyncedAtISO = result.lastSyncedAt?.toISOString() ?? null;
+                    leetcodeNeedsInitialImport = result.solvedCount === 0;
+
+                    const weakTags = processLeetcodeWeakness(result.stats);
+                    const normalizedWeakTags = weakTags.map(normalizeTag);
+                    const solvedSlugs = await getSolvedLeetcodeSlugs(userId);
+                    const difficulties = getLeetcodeTargetDifficulties(result.stats);
+                    const rawRecommended = await getLeetcodeProblemsScored(solvedSlugs, normalizedWeakTags);
+                    const recommendedProblems = rawRecommended.map(p => ({
+                        ...p,
+                        platform: 'leetcode' as const,
+                        score: p.score ?? 0,
+                        rating: p.rating ?? 1400
+                    }));
+
+                    return { 
+                        platform: 'leetcode', 
+                        handle: p.handle, 
+                        data: result.stats, 
+                        recommendedProblems
+                    };
                 }
                 default:
                     return null;
@@ -120,7 +152,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 
     return { 
         platforms, 
-        hasVerifiedPlatforms: true
+        hasVerifiedPlatforms: true,
+        leetcodeSync: {
+            gapDetected: leetcodeGapDetected,
+            lastSyncedAt: leetcodeLastSyncedAtISO,
+            needsInitialImport: leetcodeNeedsInitialImport
+        }
     };
 };
 

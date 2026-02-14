@@ -71,6 +71,20 @@
       "when": 1770993872898,
       "tag": "0009_cold_kinsey_walden",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771048006457,
+      "tag": "0010_fuzzy_greymalkin",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1771049174922,
+      "tag": "0011_gifted_dagger",
+      "breakpoints": true
     }
   ]
 }

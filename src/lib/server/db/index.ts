@@ -9,6 +9,14 @@ if (!env.DATABASE_URL) {
 
 const pool = new pg.Pool({
   connectionString: env.DATABASE_URL,
+  // Recommended for Railway/Cloud DBs:
+  keepAlive: true,
+  allowExitOnIdle: false, // Prevents the process from exiting if the pool is idle
+});
+
+// CRITICAL: Catch errors on the pool itself
+pool.on('error', (err) => {
+  console.error('Postgres Pool Error:', err);
 });
 
 export const db = drizzle(pool, { schema });

@@ -26,9 +26,8 @@ export function scoreProblems(
       const score =
         tagMatches * 3 - ratingDiff / 100;
 
-      return { problem, score };
+      return { ...problem, score };
     })
     .sort((a, b) => b.score - a.score) // highest score first
-    .slice(0, limit)
-    .map(entry => entry.problem);
+    .slice(0, limit);
 }

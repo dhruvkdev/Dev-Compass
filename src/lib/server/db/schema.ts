@@ -60,6 +60,7 @@ export const platform_handles = pgTable("platform_handles", {
 	url: text("url").notNull(),
 	verificationToken: text("verification_token"),
 	verifiedAt: timestamp("verified_at"),
+	lastSyncedAt: timestamp("last_synced_at"),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull()
 }, (table) => [
@@ -111,6 +112,16 @@ export const problems = pgTable("problems", {
   is_active: boolean("is_active").notNull().default(true),
 }, (table) => [
   uniqueIndex("platform_external_id_unique").on(table.platform, table.externalId)
+]);
+
+export const user_leetcode_solved_problems = pgTable("user_leetcode_solved_problems", {
+	id: text("id").primaryKey(),
+	userId: text("user_id").notNull().references(() => user.id),
+	problemSlug: text("problem_slug").notNull(),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+	updatedAt: timestamp("updated_at").notNull().defaultNow()
+}, (table) => [
+	uniqueIndex('user_id_problem_slug_unique').on(table.userId, table.problemSlug)
 ]);
 
 

@@ -58,8 +58,8 @@ export const load: PageServerLoad = async ({ locals }) => {
                     };
                 }
                 case 'leetcode': {
-                    const data = await getLeetCodeStatsCached(p.handle);
-                    return data ? { platform: 'leetcode', handle: p.handle, data } : null;
+                    const result = await getLeetCodeStatsCached(p.handle);
+                    return result ? { platform: 'leetcode', handle: p.handle, data: result.stats } : null;
                 }
                 default:
                     return null;
@@ -111,15 +111,15 @@ export const actions = {
             };
         }
         else if(platform == 'leetcode'){
-            const stats = await getLeetCodeStatsCached(username.toString());
-            if (!stats){
+            const result = await getLeetCodeStatsCached(username.toString());
+            if (!result){
                 return fail(404, { message: 'User not found or API error' });
             }
             return {
                 success: true,
                 platform: 'leetcode',
                 data: {
-                    ...stats
+                    ...result.stats
                 }
             };
         }

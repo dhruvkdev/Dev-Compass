@@ -1,0 +1,1 @@
+ALTER TABLE "platform_handles" ADD COLUMN "last_synced_at" timestamp;
