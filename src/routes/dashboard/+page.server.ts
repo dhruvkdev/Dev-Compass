@@ -121,11 +121,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 
                     leetcodeGapDetected = result.gapDetected;
                     leetcodeLastSyncedAtISO = result.lastSyncedAt?.toISOString() ?? null;
-                    leetcodeNeedsInitialImport = result.solvedCount === 0;
 
                     const weakTags = processLeetcodeWeakness(result.stats);
                     const normalizedWeakTags = weakTags.map(normalizeTag);
                     const solvedSlugs = await getSolvedLeetcodeSlugs(userId);
+                    
+                    // Check if user needs initial import based on database records, not API stats
+                    leetcodeNeedsInitialImport = solvedSlugs.length === 0;
+                    
                     const difficulties = getLeetcodeTargetDifficulties(result.stats);
                     const rawRecommended = await getLeetcodeProblemsScored(solvedSlugs, normalizedWeakTags);
                     const recommendedProblems = rawRecommended.map(p => ({
@@ -133,7 +136,7 @@ export const load: PageServerLoad = async ({ locals }) => {
                         platform: 'leetcode' as const,
                         score: p.score ?? 0,
                         rating: p.rating ?? 1400
-                    }));
+                    })).sort((a,b)=>b.score - a.score).slice(0, 10);
 
                     return { 
                         platform: 'leetcode', 

@@ -56,8 +56,8 @@
 	>
 		<!-- Logo -->
 		<a href="/" class="flex items-center gap-3" on:click={closeMenus}>
-			<img src="/logo.svg" alt="Logo" />
-			<span class="text-lg font-bold tracking-tight text-white/90">DevCompass</span>
+			<img src="/logo.svg" alt="Logo" class="h-8 w-8" />
+			<span class="text-lg font-bold tracking-tight text-white/90">Vector</span>
 		</a>
 
 		<!-- Desktop Nav -->

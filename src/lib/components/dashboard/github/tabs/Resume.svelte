@@ -11,7 +11,7 @@
         
         return `
 # ${profile.username}
-**DevCompass Tier:** ${tier} | **Experience:** ${activeYears}+ Years
+**Vector Tier:** ${tier} | **Experience:** ${activeYears}+ Years
 
 ## Professional Summary
 Dedicated open-source contributor with strong expertise in ${topLangs}. 

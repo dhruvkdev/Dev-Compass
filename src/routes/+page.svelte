@@ -170,7 +170,7 @@
 						Stop guessing what to learn next.
 					</h2>
 					<p class="mb-8 text-lg leading-relaxed text-zinc-400">
-						DevCompass analyzes your performance across all platforms to create a personalized
+						Vector analyzes your performance across all platforms to create a personalized
 						roadmap. whether you need to brush up on Dynamic Programming or build a full-stack
 						project, we tell you exactly what matters now.
 					</p>
@@ -195,7 +195,7 @@
 					<h2
 						class="relative z-20 text-center text-3xl font-bold text-white md:text-6xl lg:text-7xl"
 					>
-						DevCompass
+						Vector
 					</h2>
 					<div class="relative h-40 w-160">
 						<!-- Gradients -->
@@ -241,7 +241,7 @@
 			<div class="flex flex-col items-center justify-between gap-6 md:flex-row">
 				<div class="flex items-center gap-2">
 					<img src="/logo.svg" alt="Logo" class="h-8 w-8 text-white" />
-					<span class="text-lg font-bold text-white">DevCompass</span>
+					<span class="text-lg font-bold text-white">Vector</span>
 				</div>
 				<div class="flex gap-8 text-sm text-zinc-400">
 					<a href="/#" class="transition-colors hover:text-white">Privacy</a>
@@ -250,7 +250,7 @@
 					<a href="/#" class="transition-colors hover:text-white">GitHub</a>
 				</div>
 				<p class="text-sm text-zinc-600">
-					&copy; {new Date().getFullYear()} DevCompass. All rights reserved.
+					&copy; {new Date().getFullYear()} Vector. All rights reserved.
 				</p>
 			</div>
 		</div>

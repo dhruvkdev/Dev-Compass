@@ -62,7 +62,7 @@
         <!-- Rating Badge -->
         <div class="flex flex-col items-end gap-2">
             <div class="flex flex-col items-end">
-                <span class="text-xs font-medium uppercase tracking-wider text-[#8b949e]">DevCompass Rating</span>
+                <span class="text-xs font-medium uppercase tracking-wider text-[#8b949e]">Vector Rating</span>
                 <div class="flex items-baseline gap-2">
                     <span class="text-5xl font-black tracking-tight {tierColor.split(' ')[0]}">
                         {profile.rating.score}
