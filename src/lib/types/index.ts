@@ -25,6 +25,34 @@ export type CodeforcesDashboardData = {
 export type LeetCodeDifficulty = "easy" | "medium" | "hard";
 
 export type PlatformData = 
-    | { platform: 'github'; handle: string; data: GithubStats }
+    | { platform: 'github'; handle: string; data: GithubStats; githubRecommendations: GithubRecommendation[] }
     | { platform: 'codeforces'; handle: string; data: CodeforcesDashboardData }
     | { platform: 'leetcode'; handle: string; data: LeetCodeStats; recommendedProblems: RecommendedProblem[] };
+
+export type GithubAnalysis = {
+    persona: string;
+    maturity: string;
+    userId: string;
+    id: string;
+    axes: {
+        consistency: string;
+        collaboration: string;
+        projectDepth: string;
+    };
+    focusAreas: string[];
+    gaps: string[];
+    strengths: string[];
+};
+
+export type GithubRecommendation = {
+  category: "reinforcement" | "depth" | "maintenance" | "micro_collaboration";
+  axisTargeted: string;
+  title: string;
+  description: string;
+};
+
+export type GithubRecommendationRule = {
+  priority: number; // lower = more important
+  when: (a: GithubAnalysis) => boolean;
+  build: () => GithubRecommendation;
+};

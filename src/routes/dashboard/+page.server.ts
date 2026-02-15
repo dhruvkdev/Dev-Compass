@@ -18,8 +18,9 @@ import { processCodeforcesWeakness } from '$lib/server/platforms';
 import { log } from 'console';
 import { get } from 'http';
 
-import type { PlatformData, CodeforcesDashboardData } from '$lib/types';
+import type { PlatformData, CodeforcesDashboardData, GithubAnalysis } from '$lib/types';
 import { normalizeTag } from '$lib/utils/normalise';
+import { analyzeGithubSnapshot, generateGithubRecommendations, ingestGithubSnapshot } from '$lib/server/recommendations/github';
 
 
 type CodeforcesUserProfile = {
@@ -82,8 +83,11 @@ export const load: PageServerLoad = async ({ locals }) => {
         try {
             switch (p.platform) {
                 case 'github': {
-                    const data = await getGithubStatsCached(p.handle);
-                    return data ? { platform: 'github', handle: p.handle, data } : null;
+                    const data = await ingestGithubSnapshot(userId, p.handle);
+                    if (!data) return null;
+                    const analysis = await analyzeGithubSnapshot(data);
+                    const recommendations = await generateGithubRecommendations(analysis);
+                    return { platform: 'github', handle: p.handle, data: data as any, githubRecommendations: recommendations };
                 }
                 case 'codeforces': {
                     const result = await getCodeforcesStatsCached(p.handle);

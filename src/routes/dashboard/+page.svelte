@@ -7,7 +7,7 @@
 	import PlatformSection from '$lib/components/dashboard/PlatformSection.svelte';
 	import PlatformStatusPill from '$lib/components/dashboard/PlatformStatusPill.svelte';
 	import type { PageData } from './$types';
-	import type { PlatformData, RecommendedProblem } from '$lib/types';
+	import type { PlatformData, RecommendedProblem, GithubRecommendation } from '$lib/types';
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
   import { ChevronDown } from "lucide-svelte";
 
@@ -518,12 +518,34 @@
 			<!-- GitHub Section -->
 			{#if githubData}
 				<!-- svelte-ignore attribute_quoted -->
-				<PlatformSection title="GitHub" subtitle="{githubData.handle}" platform="github">
+				<PlatformSection title="GitHub" subtitle="{githubData.handle} · {githubData.githubRecommendations.length} recommendations" platform="github">
 					{#snippet children()}
-						<p class="text-zinc-500 text-sm">
-							GitHub integration available. View your contribution stats on the
-							<a href="/analysis" class="text-blue-400 hover:text-blue-300">Analysis page</a>.
-						</p>
+						{#if githubData.githubRecommendations.length === 0}
+							<p class="text-zinc-500 text-sm py-4">
+								No GitHub recommendations yet. Keep contributing and we'll generate personalized suggestions.
+							</p>
+						{:else}
+							<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+								{#each githubData.githubRecommendations as rec}
+									{@const categoryColors = {
+										reinforcement: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+										depth: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+										maintenance: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
+										micro_collaboration: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+									}}
+									<div class="p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+										<div class="flex items-center gap-2 mb-3">
+											<span class="px-2 py-0.5 text-[10px] font-semibold uppercase rounded border {categoryColors[rec.category] ?? 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'}">
+												{rec.category.replace('_', ' ')}
+											</span>
+											<span class="text-[10px] text-zinc-600 font-mono">{rec.axisTargeted}</span>
+										</div>
+										<h4 class="text-sm font-medium text-zinc-200 mb-1.5">{rec.title}</h4>
+										<p class="text-xs text-zinc-500 leading-relaxed">{rec.description}</p>
+									</div>
+								{/each}
+							</div>
+						{/if}
 					{/snippet}
 				</PlatformSection>
 			{/if}

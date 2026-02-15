@@ -4,6 +4,7 @@ import { pgTable, text, integer, timestamp, boolean, uniqueIndex, pgEnum, uuid, 
 export const platformEnum = pgEnum('platform', ['leetcode', 'codeforces', 'codechef', 'github', 'geeksforgeeks', 'atcoder', 'hackerrank', 'hackerearth', 'cses', 'usaco']);
 export const contextType = pgEnum('contextType', ['dsa_roadmap', 'cp_strategy', 'dev_suggestion', 'global_summary']);
 export const difficultyEnum = pgEnum('difficulty', ['easy', 'medium', 'hard']);
+export const recommendationCategoryEnum = pgEnum('recommendation_category', ['reinforcement', 'depth', 'maintenance', 'micro_collaboration']);
 
 export const user = pgTable("user", {
 	id: text("id").primaryKey(),
@@ -142,3 +143,80 @@ export const user_recommended_problems = pgTable("user_recommended_problems", {
 }, (table) => [
 	uniqueIndex('user_id_problem_id_unique').on(table.userId, table.problemId)
 ]);
+
+export const github_profile_snapshots = pgTable("github_profile_snapshots", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	userId: text("user_id").notNull().references(() => user.id),
+	githubUsername: text("github_username").notNull(),
+	repoCount: integer("repo_count").notNull(),
+	totalCommits: integer("total_commits").notNull(),
+	languages: jsonb("languages").notNull(),
+	reposMetadata: jsonb("repos_metadata").notNull(),
+	contributionStats: jsonb("contribution_stats").notNull(),
+	createdAt: timestamp("created_at").notNull().defaultNow()
+},(t) => [
+	index("github_snapshot_user_idx").on(t.userId),
+	index("github_snapshot_created_idx").on(t.createdAt)
+]);
+
+export const github_analysis = pgTable(
+  "github_analysis",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+
+    snapshotId: uuid("snapshot_id")
+      .notNull()
+      .references(() => github_profile_snapshots.id),
+
+    persona: text("persona").notNull(),
+    maturity: text("maturity").notNull(),
+
+    focusAreas: jsonb("focus_areas").notNull(),
+    strengths: jsonb("strengths").notNull(),
+    gaps: jsonb("gaps").notNull(),
+
+    axes: jsonb("axes").notNull(), // descriptive, not numeric
+
+    generatedAt: timestamp("generated_at").notNull().defaultNow(),
+  },
+  (t) => [
+	uniqueIndex("github_analysis_snapshot_unique").on(t.userId, t.snapshotId),
+	index("github_analysis_generated_idx").on(t.generatedAt)
+  ]
+);
+
+export const github_recommendations = pgTable(
+  "github_recommendations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+
+    analysisId: uuid("analysis_id")
+      .notNull()
+      .references(() => github_analysis.id),
+
+    category: text("category").notNull(), 
+    // reinforcement | depth | maintenance | micro_collaboration
+
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+	dismissedAt: timestamp("dismissed_at"),
+	completedAt: timestamp("completed_at"),
+
+    axisTargeted: text("axis_targeted").notNull(),
+
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+	index("github_reco_user_idx").on(t.userId),
+	index("github_reco_analysis_idx").on(t.analysisId),
+	index("github_reco_category_idx").on(t.category)
+  ]
+);
