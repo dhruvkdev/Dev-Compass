@@ -143,6 +143,7 @@
 <!-- Modals & Toasts -->
 {#if showImportModal}
 	<LeetCodeImportModal
+		open={showImportModal}
 		onClose={() => {
 			showImportModal = false;
 			importModalDismissed = true;
