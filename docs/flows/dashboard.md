@@ -39,8 +39,9 @@ The `load` function in `src/routes/dashboard/+page.server.ts` orchestrates the f
 The frontend receives the pre-fetched data and renders it immediately.
 
 - **Auto-Selection**: The first verified platform in the list is automatically selected and displayed.
+- **Sync Banners**: If a platform (like LeetCode) is verified but not yet synced (`is_synced = false`), a persistent banner is displayed prompting for bulk import.
 - **Tabs**: Platform tabs are dynamically generated based on verified accounts.
-- **Components**: Each platform has a dedicated dashboard component (e.g., `<GithubDashboard />`) that handles the specific visualization of that data.
+- **Components**: Each platform has a dedicated dashboard component (e.g., `<GithubDashboard />`) that handles the specific visualization of that data. Recommendation cards are generated based on identified weaknesses.
 
 ---
 

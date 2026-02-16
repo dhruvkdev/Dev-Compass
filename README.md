@@ -8,12 +8,12 @@ It solves the problem of scattered developer profiles by unifying them into a si
 
 ## 🚀 Tech Stack
 
-- **Framework**: SvelteKit
-- **Authentication**: BetterAuth (GitHub OAuth)
-- **Database**: PostgreSQL (via Drizzle ORM)
+- **Framework**: [SvelteKit](https://kit.svelte.dev/) (Svelte 5 Runes)
+- **Authentication**: [BetterAuth](https://www.better-auth.com/) (GitHub & Google OAuth)
+- **Database**: PostgreSQL (via [Drizzle ORM](https://orm.drizzle.team/))
 - **Caching**: Redis (Upstash)
 - **Styling**: TailwindCSS
-- **Deployment**: Docker / Vercel (compatible)
+- **Deployment**: Railway / Vercel compatible
 
 ---
 
@@ -21,10 +21,10 @@ It solves the problem of scattered developer profiles by unifying them into a si
 
 ### Prerequisites
 
-- Node.js (v18+) or Bun (v1.0+)
+- Node.js (v20+) or Bun (v1.1+)
 - PostgreSQL database
 - Redis instance (Upstash recommended)
-- GitHub OAuth credentials
+- GitHub/Google OAuth credentials
 
 ### Installation
 
@@ -48,10 +48,15 @@ It solves the problem of scattered developer profiles by unifying them into a si
    # Database
    DATABASE_URL="postgres://..."
 
-   # Auth
-   BETTER_AUTH_SECRET="your-secret"
+   # Auth (BetterAuth)
+   BETTER_AUTH_SECRET="your-secret-generated-by-openssl"
+   BETTER_AUTH_URL="http://localhost:5173" # Base URL of your app
+
+   # OAuth Providers
    GITHUB_CLIENT_ID="your-id"
    GITHUB_CLIENT_SECRET="your-secret"
+   GOOGLE_CLIENT_ID="your-id"
+   GOOGLE_CLIENT_SECRET="your-secret"
 
    # Redis
    UPSTASH_REDIS_REST_URL="https://..."
@@ -77,5 +82,6 @@ Detailed internal documentation is available in the [`docs/`](./docs) directory:
 
 - [**System Architecture**](./docs/architecture.md) - High-level design and components
 - [**Verification Flows**](./docs/flows/verification.md) - How we verify platform ownership
+- [**LeetCode Synchronization**](./docs/leetcode-sync.md) - Bulk import and recommendation scoring
 - [**Caching Strategy**](./docs/caching.md) - Redis implementation details
 - [**Dashboard Data Flow**](./docs/flows/dashboard.md) - How analytics are fetched and displayed

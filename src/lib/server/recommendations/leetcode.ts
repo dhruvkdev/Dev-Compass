@@ -56,7 +56,7 @@ export async function getLeetcodeProblemsScored(
         excludeCondition
       )
     )
-    .orderBy(sql`score DESC`) // Add randomness to break ties and shuffle top results
+    .orderBy(sql`score DESC`, sql`RANDOM()`) // Add randomness to break ties and shuffle top results
     .limit(20)
     .as("top_twenty");
 

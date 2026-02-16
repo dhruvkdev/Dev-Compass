@@ -16,7 +16,7 @@ Since users can sign in with GitHub via BetterAuth, we implicitly trust the GitH
 
 ### Flow
 
-1. User clicks "Verify GitHub" in Settings.
+1. User clicks "Verify GitHub" in **Verify** page.
 2. System checks `account` table for a linked GitHub provider.
 3. If linked:
    - Fetch verified GitHub username from BetterAuth/GitHub API.

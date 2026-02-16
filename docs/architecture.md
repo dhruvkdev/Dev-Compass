@@ -12,24 +12,25 @@ DevCompass follows a **server-side rendered (SSR)** architecture using SvelteKit
 
 - **Routes**:
   - `/dashboard`: Main analytics view (auto-fetches verified data).
-  - `/settings`: Account verification interface.
+  - `/verify`: Account verification interface.
   - `/profile`: Public profile view.
 - **Server Actions**: Handle form submissions for verification and settings updates.
 - **Load Functions**: Fetch data on the server before rendering the UI to ensure fast First Contentful Paint (FCP).
 
 ### 2. Authentication Layer (BetterAuth)
 
-- Manages user sessions and OAuth flows (GitHub).
+- Manages user sessions and OAuth flows (GitHub & Google).
 - Stores session data in PostgreSQL (`user`, `session`, `account` tables).
 - Provides `locals.user` to server-side load functions for protected routes.
 
-### 3. Verification Module
+### 3. Verification & Synchronization Module
 
-Located in `$lib/server/verification/`.
+Located in `$lib/server/verification/` and `$lib/server/recommendations/`.
 
-- **Purpose**: proves ownership of external accounts.
+- **Purpose**: Proves ownership of external accounts and synchronizes problem history.
 - **Strategy**: Platform-specific verifiers (Bio token, OAuth, Name match).
-- **Storage**: Verified handles are stored in the `platform_handles` table.
+- **Synchronization**: LeetCode uses a bulk import process to backfill history, enabling personalized recommendations.
+- **Storage**: Verified handles and sync status are stored in the `platform_handles` table.
 
 ### 4. Caching & Data Layer
 
