@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import Toast from '$lib/components/Toast.svelte';
+	import { invalidateAll } from '$app/navigation';
 	import LeetCodeImportModal from '$lib/components/LeetCodeImportModal.svelte';
 	import RecommendationCard from '$lib/components/dashboard/RecommendationCard.svelte';
 	import PlatformSection from '$lib/components/dashboard/PlatformSection.svelte';
 	import PlatformStatusPill from '$lib/components/dashboard/PlatformStatusPill.svelte';
 	import type { PageData } from './$types';
 	import type { PlatformData, RecommendedProblem, GithubRecommendation } from '$lib/types';
-  import * as DropdownMenu from "$lib/components/ui/dropdown-menu/index.js";
-  import { ChevronDown } from "lucide-svelte";
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
+	import { ChevronDown } from 'lucide-svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -35,17 +35,15 @@
 	);
 
 	// --- LeetCode sync state ---
-	let leetcodeSync = $derived((data as any).leetcodeSync as { gapDetected: boolean; lastSyncedAt: string | null; needsInitialImport: boolean } | null);
+	let leetcodeSync = $derived(
+		(data as any).leetcodeSync as {
+			gapDetected: boolean;
+			lastSyncedAt: string | null;
+			needsInitialImport: boolean;
+			isSynced: boolean;
+		} | null
+	);
 	let showImportModal = $state(false);
-	let showGapToast = $state(false);
-	let importModalDismissed = $state(false);
-
-	$effect(() => {
-		if (leetcodeData && leetcodeSync) {
-			if (leetcodeSync.needsInitialImport && !importModalDismissed) showImportModal = true;
-			if (leetcodeSync.gapDetected) showGapToast = true;
-		}
-	});
 
 	// --- Unified recommendations (merge CF + LC, sorted by score desc) ---
 	let allRecommendations = $derived.by(() => {
@@ -56,7 +54,7 @@
 				recs.push(p as RecommendedProblem);
 			}
 		}
-		if (leetcodeData) {
+		if (leetcodeData && leetcodeSync?.isSynced) {
 			for (const p of leetcodeData.recommendedProblems) {
 				recs.push(p as RecommendedProblem);
 			}
@@ -74,7 +72,7 @@
 	let cfFilterText = $state('');
 	let cfSelectedTags = $state<string[]>([]);
 	let cfShowFilters = $state(false);
-  let displayLabel = $derived(cfSortBy.charAt(0).toUpperCase() + cfSortBy.slice(1));
+	let displayLabel = $derived(cfSortBy.charAt(0).toUpperCase() + cfSortBy.slice(1));
 
 	let cfProblems = $derived(codeforcesData ? codeforcesData.data.cfProblemsByRating : []);
 	let cfAllTags = $derived([...new Set(cfProblems.flatMap((p) => p.tags || []))].sort());
@@ -85,7 +83,9 @@
 				const matchesSearch =
 					!cfFilterText ||
 					problem.title.toLowerCase().includes(cfFilterText.toLowerCase()) ||
-					problem.tags?.some((tag: string) => tag.toLowerCase().includes(cfFilterText.toLowerCase()));
+					problem.tags?.some((tag: string) =>
+						tag.toLowerCase().includes(cfFilterText.toLowerCase())
+					);
 				const matchesTags =
 					cfSelectedTags.length === 0 ||
 					cfSelectedTags.every((tag: string) => problem.tags?.includes(tag));
@@ -146,39 +146,33 @@
 		open={showImportModal}
 		onClose={() => {
 			showImportModal = false;
-			importModalDismissed = true;
+		}}
+		onSuccess={() => {
+			invalidateAll();
 		}}
 	/>
 {/if}
 
-{#if showGapToast}
-	<Toast
-		message="Some older LeetCode submissions may be missing. Use bulk import to fill gaps."
-		type="warning"
-		onClose={() => (showGapToast = false)}
-	/>
-{/if}
-
-<div class="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-blue-500/30">
+<div class="min-h-screen bg-zinc-950 font-sans text-zinc-100 selection:bg-blue-500/30">
 	<!-- Background fx -->
 	<div
-		class="fixed top-0 left-0 w-full h-96 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950 pointer-events-none"
+		class="pointer-events-none fixed top-0 left-0 h-96 w-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-zinc-950 to-zinc-950"
 	></div>
 	<div
-		class="fixed bottom-0 right-0 w-[500px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none"
+		class="pointer-events-none fixed right-0 bottom-0 h-[500px] w-[500px] rounded-full bg-blue-900/10 blur-[120px]"
 	></div>
 
-	<main class="relative max-w-7xl mx-auto px-6 py-24">
+	<main class="relative mx-auto max-w-7xl px-6 py-24">
 		<!-- ===== ZONE 1: HERO ===== -->
 		<header class="mb-12" in:fade={{ duration: 300, delay: 100 }}>
-			<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-6">
+			<div class="mb-6 flex flex-col justify-between gap-6 md:flex-row md:items-end">
 				<div>
 					<h1
-						class="text-3xl md:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-zinc-100 to-zinc-400"
+						class="bg-gradient-to-r from-zinc-100 to-zinc-400 bg-clip-text text-3xl font-bold text-transparent md:text-4xl"
 					>
 						Dashboard
 					</h1>
-					<p class="text-zinc-500 mt-2">Here's what to work on next.</p>
+					<p class="mt-2 text-zinc-500">Here's what to work on next.</p>
 				</div>
 			</div>
 
@@ -205,24 +199,24 @@
 		<!-- ===== ZONE 2: RECOMMENDATIONS ===== -->
 		{#if allRecommendations.length > 0}
 			<section class="mb-12" in:fly={{ y: 20, duration: 400, delay: 200, easing: cubicOut }}>
-				<div class="flex items-center justify-between mb-6">
+				<div class="mb-6 flex items-center justify-between">
 					<div>
 						<h2 class="text-xl font-semibold text-zinc-200">Recommended for You</h2>
-						<p class="text-sm text-zinc-500 mt-1">
+						<p class="mt-1 text-sm text-zinc-500">
 							Personalized picks based on your weak areas · {allRecommendations.length} problems
 						</p>
 					</div>
 					{#if allRecommendations.length > 6}
 						<button
 							onclick={() => (showAllRecs = !showAllRecs)}
-							class="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+							class="text-sm text-blue-400 transition-colors hover:text-blue-300"
 						>
 							{showAllRecs ? 'Show less' : `Show all ${allRecommendations.length}`}
 						</button>
 					{/if}
 				</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each visibleRecs as problem (problem.id)}
 						<div in:fade={{ duration: 200 }}>
 							<RecommendationCard {problem} />
@@ -232,18 +226,18 @@
 			</section>
 		{:else}
 			<section
-				class="mb-12 border border-white/5 rounded-2xl bg-zinc-900/30 p-12 text-center"
+				class="mb-12 rounded-2xl border border-white/5 bg-zinc-900/30 p-12 text-center"
 				in:fade={{ duration: 300 }}
 			>
-				<div class="text-4xl mb-4">🧭</div>
-				<h2 class="text-lg font-semibold text-zinc-300 mb-2">No recommendations yet</h2>
-				<p class="text-sm text-zinc-500 max-w-md mx-auto">
+				<div class="mb-4 text-4xl">🧭</div>
+				<h2 class="mb-2 text-lg font-semibold text-zinc-300">No recommendations yet</h2>
+				<p class="mx-auto max-w-md text-sm text-zinc-500">
 					Connect a platform and solve some problems. We'll analyze your weak areas and suggest what
 					to practice next.
 				</p>
 				<a
 					href="/verify"
-					class="inline-block mt-6 px-5 py-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20 hover:bg-blue-500/20 transition-colors text-sm font-medium"
+					class="mt-6 inline-block rounded-xl border border-blue-500/20 bg-blue-500/10 px-5 py-2.5 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/20"
 				>
 					Connect a platform
 				</a>
@@ -261,29 +255,29 @@
 				>
 					{#snippet children()}
 						<!-- Inline stats -->
-						<div class="flex flex-wrap gap-3 mb-4">
-							<div
-								class="px-3 py-2 bg-zinc-800/50 rounded-lg border border-white/5 text-sm"
-							>
+						<div class="mb-4 flex flex-wrap gap-3">
+							<div class="rounded-lg border border-white/5 bg-zinc-800/50 px-3 py-2 text-sm">
 								<span class="text-zinc-500">Rating:</span>
-								<span class="font-mono {getRatingColor(Number(codeforcesData?.data?.info?.rating ?? 0))}">
+								<span
+									class="font-mono {getRatingColor(
+										Number(codeforcesData?.data?.info?.rating ?? 0)
+									)}"
+								>
 									{codeforcesData?.data?.info?.rating ?? '—'}
 								</span>
 							</div>
-							<div
-								class="px-3 py-2 bg-zinc-800/50 rounded-lg border border-white/5 text-sm"
-							>
+							<div class="rounded-lg border border-white/5 bg-zinc-800/50 px-3 py-2 text-sm">
 								<span class="text-zinc-500">Showing:</span>
-								<span class="text-zinc-200 font-mono">{cfFilteredProblems.length}</span>
+								<span class="font-mono text-zinc-200">{cfFilteredProblems.length}</span>
 								<span class="text-zinc-600">/ {cfProblems.length}</span>
 							</div>
 							{#if codeforcesData?.data?.weakTags?.length}
 								<div
-									class="px-3 py-2 bg-zinc-800/50 rounded-lg border border-white/5 text-sm flex items-center gap-2"
+									class="flex items-center gap-2 rounded-lg border border-white/5 bg-zinc-800/50 px-3 py-2 text-sm"
 								>
 									<span class="text-zinc-500">Weak:</span>
 									{#each codeforcesData.data.weakTags.slice(0, 3) as wt}
-										<span class="text-rose-400 text-xs">{wt.tag}</span>
+										<span class="text-xs text-rose-400">{wt.tag}</span>
 									{/each}
 								</div>
 							{/if}
@@ -291,11 +285,11 @@
 
 						<!-- Controls row -->
 						<div
-							class="flex flex-col sm:flex-row gap-2 mb-4 p-3 bg-zinc-800/30 rounded-xl border border-white/5"
+							class="mb-4 flex flex-col gap-2 rounded-xl border border-white/5 bg-zinc-800/30 p-3 sm:flex-row"
 						>
-							<div class="flex-1 relative">
+							<div class="relative flex-1">
 								<svg
-									class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500"
+									class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-500"
 									fill="none"
 									stroke="currentColor"
 									viewBox="0 0 24 24"
@@ -311,29 +305,29 @@
 									type="text"
 									placeholder="Search Codeforces problems..."
 									bind:value={cfFilterText}
-									class="w-full pl-9 pr-4 py-2 bg-zinc-900/50 text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-blue-500/30 rounded-lg border border-white/5"
+									class="w-full rounded-lg border border-white/5 bg-zinc-900/50 py-2 pr-4 pl-9 text-sm text-zinc-200 placeholder-zinc-600 focus:ring-1 focus:ring-blue-500/30 focus:outline-none"
 								/>
 							</div>
-							<div class="flex gap-2 items-center">
+							<div class="flex items-center gap-2">
 								<DropdownMenu.Root>
 									<DropdownMenu.Trigger
-										class="inline-flex w-[140px] items-center justify-between rounded-md border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white focus:outline-none cursor-pointer"
+										class="inline-flex w-[140px] cursor-pointer items-center justify-between rounded-md border border-white/5 bg-zinc-900/50 px-3 py-2 text-sm font-medium text-zinc-300 transition-all hover:bg-zinc-800 hover:text-white focus:outline-none"
 									>
 										{displayLabel}
 										<ChevronDown class="ml-2 h-4 w-4 opacity-50" />
 									</DropdownMenu.Trigger>
 
-									<DropdownMenu.Content class="w-40 bg-zinc-950 border-white/10 text-zinc-300">
+									<DropdownMenu.Content class="w-40 border-white/10 bg-zinc-950 text-zinc-300">
 										<DropdownMenu.Group>
 											<DropdownMenu.Label>Sort By</DropdownMenu.Label>
 											<DropdownMenu.Separator class="bg-white/5" />
-											<DropdownMenu.Item onclick={() => cfSortBy = "rating"}>
+											<DropdownMenu.Item onclick={() => (cfSortBy = 'rating')}>
 												Rating
 											</DropdownMenu.Item>
-											<DropdownMenu.Item onclick={() => cfSortBy = "difficulty"}>
+											<DropdownMenu.Item onclick={() => (cfSortBy = 'difficulty')}>
 												Difficulty
 											</DropdownMenu.Item>
-											<DropdownMenu.Item onclick={() => cfSortBy = "title"}>
+											<DropdownMenu.Item onclick={() => (cfSortBy = 'title')}>
 												Title
 											</DropdownMenu.Item>
 										</DropdownMenu.Group>
@@ -341,11 +335,11 @@
 								</DropdownMenu.Root>
 								<button
 									onclick={() => (cfSortOrder = cfSortOrder === 'asc' ? 'desc' : 'asc')}
-									class="p-2 bg-zinc-900/50 rounded-lg border border-white/5 text-zinc-400 hover:text-zinc-200 transition-colors"
+									class="rounded-lg border border-white/5 bg-zinc-900/50 p-2 text-zinc-400 transition-colors hover:text-zinc-200"
 									aria-label="Toggle sort order"
 								>
 									<svg
-										class="w-4 h-4 transition-transform {cfSortOrder === 'asc' ? 'rotate-180' : ''}"
+										class="h-4 w-4 transition-transform {cfSortOrder === 'asc' ? 'rotate-180' : ''}"
 										fill="none"
 										stroke="currentColor"
 										viewBox="0 0 24 24"
@@ -360,10 +354,13 @@
 								</button>
 								<button
 									onclick={() => (cfShowFilters = !cfShowFilters)}
-									class="p-2 bg-zinc-900/50 rounded-lg border border-white/5 text-zinc-400 hover:text-zinc-200 transition-colors {cfSelectedTags.length > 0 ? 'ring-1 ring-blue-500/30' : ''}"
+									class="rounded-lg border border-white/5 bg-zinc-900/50 p-2 text-zinc-400 transition-colors hover:text-zinc-200 {cfSelectedTags.length >
+									0
+										? 'ring-1 ring-blue-500/30'
+										: ''}"
 									aria-label="Toggle tag filters"
 								>
-									<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 										<path
 											stroke-linecap="round"
 											stroke-linejoin="round"
@@ -375,7 +372,7 @@
 								{#if cfFilterText || cfSelectedTags.length > 0}
 									<button
 										onclick={clearCfFilters}
-										class="px-3 py-2 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+										class="px-3 py-2 text-xs text-blue-400 transition-colors hover:text-blue-300"
 									>
 										Clear
 									</button>
@@ -385,14 +382,16 @@
 
 						<!-- Tag filter chips -->
 						{#if cfShowFilters && cfAllTags.length > 0}
-							<div class="flex flex-wrap gap-1.5 mb-4 p-3 bg-zinc-800/20 rounded-xl border border-white/5">
+							<div
+								class="mb-4 flex flex-wrap gap-1.5 rounded-xl border border-white/5 bg-zinc-800/20 p-3"
+							>
 								{#each cfAllTags as tag}
 									<button
 										onclick={() => toggleCfTag(tag)}
-										class="px-2.5 py-1 text-xs rounded-md border transition-colors
+										class="rounded-md border px-2.5 py-1 text-xs transition-colors
 											{cfSelectedTags.includes(tag)
-											? 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-											: 'bg-zinc-800/50 text-zinc-400 border-white/5 hover:bg-zinc-700/50'}"
+											? 'border-blue-500/30 bg-blue-500/20 text-blue-300'
+											: 'border-white/5 bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700/50'}"
 									>
 										{tag}
 									</button>
@@ -402,7 +401,7 @@
 
 						<!-- Problem list -->
 						{#if cfFilteredProblems.length === 0}
-							<div class="text-center py-8 text-zinc-500">
+							<div class="py-8 text-center text-zinc-500">
 								<p>No problems match your filters.</p>
 								{#if cfFilterText || cfSelectedTags.length > 0}
 									<button
@@ -414,44 +413,46 @@
 								{/if}
 							</div>
 						{:else}
-							<div class="divide-y divide-white/5 border border-white/5 rounded-xl overflow-hidden">
+							<div class="divide-y divide-white/5 overflow-hidden rounded-xl border border-white/5">
 								{#each cfFilteredProblems as problem (problem.id)}
 									<a
 										href={problem.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										class="flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-colors group"
+										class="group flex items-center justify-between px-4 py-3 transition-colors hover:bg-white/[0.02]"
 									>
-										<div class="flex-1 min-w-0">
+										<div class="min-w-0 flex-1">
 											<div class="flex items-center gap-2">
 												<span
-													class="text-sm font-medium text-zinc-200 group-hover:text-white transition-colors truncate"
+													class="truncate text-sm font-medium text-zinc-200 transition-colors group-hover:text-white"
 												>
 													{problem.title}
 												</span>
 												{#if problem.difficulty}
 													<span
-														class="shrink-0 px-1.5 py-0.5 text-[10px] font-semibold uppercase rounded border
-															{diffColors[problem.difficulty.toLowerCase()] ?? 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'}"
+														class="shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase
+															{diffColors[problem.difficulty.toLowerCase()] ?? 'border-zinc-400/20 bg-zinc-400/10 text-zinc-400'}"
 													>
 														{problem.difficulty}
 													</span>
 												{/if}
 											</div>
 											{#if problem.tags?.length}
-												<div class="flex gap-1 mt-1">
+												<div class="mt-1 flex gap-1">
 													{#each problem.tags.slice(0, 4) as tag}
 														<span class="text-[10px] text-zinc-500">{tag}</span>
 													{/each}
 												</div>
 											{/if}
 										</div>
-										<div class="flex items-center gap-3 shrink-0 ml-4">
+										<div class="ml-4 flex shrink-0 items-center gap-3">
 											{#if problem.rating}
-												<span class="font-mono text-sm {getRatingColor(problem.rating)}">{problem.rating}</span>
+												<span class="font-mono text-sm {getRatingColor(problem.rating)}"
+													>{problem.rating}</span
+												>
 											{/if}
 											<svg
-												class="w-4 h-4 text-zinc-600 group-hover:text-zinc-400 transition-colors"
+												class="h-4 w-4 text-zinc-600 transition-colors group-hover:text-zinc-400"
 												fill="none"
 												stroke="currentColor"
 												viewBox="0 0 24 24"
@@ -476,41 +477,65 @@
 			{#if leetcodeData}
 				<PlatformSection
 					title="LeetCode"
-					subtitle="{leetcodeData.handle} · {leetcodeData.recommendedProblems.length} recommendations"
+					subtitle="{leetcodeData.handle} · {leetcodeData.recommendedProblems
+						.length} recommendations"
 					platform="leetcode"
 				>
 					{#snippet children()}
-						<div class="flex flex-wrap gap-3 mb-4">
+						{#if !leetcodeSync?.isSynced}
 							<div
-								class="px-3 py-2 bg-zinc-800/50 rounded-lg border border-white/5 text-sm"
+								class="flex flex-col items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-12 text-center"
 							>
-								<span class="text-zinc-500">Synced:</span>
-								<span class="text-zinc-200">
-									{leetcodeSync?.lastSyncedAt
-										? new Date(leetcodeSync.lastSyncedAt).toLocaleDateString()
-										: 'Never'}
-								</span>
-							</div>
-							{#if leetcodeSync?.needsInitialImport}
+								<div
+									class="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20"
+								>
+									<svg
+										class="h-6 w-6 text-amber-500"
+										fill="none"
+										stroke="currentColor"
+										viewBox="0 0 24 24"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2"
+											d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+										/>
+									</svg>
+								</div>
+								<h3 class="mb-2 text-lg font-semibold text-amber-400">Sync Required</h3>
+								<p class="mb-6 max-w-md text-sm text-zinc-400">
+									Your LeetCode account is not fully synced. Please import your submissions to
+									generate personalized recommendations.
+								</p>
 								<button
 									onclick={() => (showImportModal = true)}
-									class="px-3 py-2 bg-amber-500/10 text-amber-400 rounded-lg border border-amber-500/20 text-sm font-medium hover:bg-amber-500/20 transition-colors"
+									class="rounded-lg bg-amber-500 px-5 py-2.5 font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
 								>
-									Import submission history →
+									Sync LeetCode Data
 								</button>
-							{/if}
-						</div>
-
-						{#if leetcodeData.recommendedProblems.length === 0}
-							<p class="text-zinc-500 text-sm py-4">
-								No LeetCode recommendations available. Import your submissions to get started.
-							</p>
-						{:else}
-							<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-								{#each leetcodeData.recommendedProblems as problem (problem.id)}
-									<RecommendationCard {problem} />
-								{/each}
 							</div>
+						{:else}
+							<div class="mb-4 flex flex-wrap gap-3">
+								<div class="rounded-lg border border-white/5 bg-zinc-800/50 px-3 py-2 text-sm">
+									<span class="text-zinc-500">Synced:</span>
+									<span class="text-zinc-200">
+										{leetcodeSync?.lastSyncedAt
+											? new Date(leetcodeSync.lastSyncedAt).toLocaleDateString()
+											: 'Never'}
+									</span>
+								</div>
+							</div>
+
+							{#if leetcodeData.recommendedProblems.length === 0}
+								<p class="py-4 text-sm text-zinc-500">No LeetCode recommendations available.</p>
+							{:else}
+								<div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+									{#each leetcodeData.recommendedProblems as problem (problem.id)}
+										<RecommendationCard {problem} />
+									{/each}
+								</div>
+							{/if}
 						{/if}
 					{/snippet}
 				</PlatformSection>
@@ -519,30 +544,41 @@
 			<!-- GitHub Section -->
 			{#if githubData}
 				<!-- svelte-ignore attribute_quoted -->
-				<PlatformSection title="GitHub" subtitle="{githubData.handle} · {githubData.githubRecommendations.length} recommendations" platform="github">
+				<PlatformSection
+					title="GitHub"
+					subtitle="{githubData.handle} · {githubData.githubRecommendations.length} recommendations"
+					platform="github"
+				>
 					{#snippet children()}
 						{#if githubData.githubRecommendations.length === 0}
-							<p class="text-zinc-500 text-sm py-4">
-								No GitHub recommendations yet. Keep contributing and we'll generate personalized suggestions.
+							<p class="py-4 text-sm text-zinc-500">
+								No GitHub recommendations yet. Keep contributing and we'll generate personalized
+								suggestions.
 							</p>
 						{:else}
-							<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+							<div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
 								{#each githubData.githubRecommendations as rec}
 									{@const categoryColors = {
 										reinforcement: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 										depth: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
 										maintenance: 'text-amber-400 bg-amber-400/10 border-amber-400/20',
-										micro_collaboration: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+										micro_collaboration: 'text-purple-400 bg-purple-400/10 border-purple-400/20'
 									}}
-									<div class="p-4 bg-zinc-900/50 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
-										<div class="flex items-center gap-2 mb-3">
-											<span class="px-2 py-0.5 text-[10px] font-semibold uppercase rounded border {categoryColors[rec.category] ?? 'text-zinc-400 bg-zinc-400/10 border-zinc-400/20'}">
+									<div
+										class="rounded-xl border border-white/5 bg-zinc-900/50 p-4 transition-colors hover:border-white/10"
+									>
+										<div class="mb-3 flex items-center gap-2">
+											<span
+												class="rounded border px-2 py-0.5 text-[10px] font-semibold uppercase {categoryColors[
+													rec.category
+												] ?? 'border-zinc-400/20 bg-zinc-400/10 text-zinc-400'}"
+											>
 												{rec.category.replace('_', ' ')}
 											</span>
-											<span class="text-[10px] text-zinc-600 font-mono">{rec.axisTargeted}</span>
+											<span class="font-mono text-[10px] text-zinc-600">{rec.axisTargeted}</span>
 										</div>
-										<h4 class="text-sm font-medium text-zinc-200 mb-1.5">{rec.title}</h4>
-										<p class="text-xs text-zinc-500 leading-relaxed">{rec.description}</p>
+										<h4 class="mb-1.5 text-sm font-medium text-zinc-200">{rec.title}</h4>
+										<p class="text-xs leading-relaxed text-zinc-500">{rec.description}</p>
 									</div>
 								{/each}
 							</div>
@@ -553,13 +589,13 @@
 		</div>
 
 		<!-- ===== ZONE 4: SYNC STATUS ===== -->
-		<footer
-			class="mt-12 pt-8 border-t border-white/5"
-			in:fade={{ duration: 300, delay: 400 }}
-		>
+		<footer class="mt-12 border-t border-white/5 pt-8" in:fade={{ duration: 300, delay: 400 }}>
 			<div class="flex flex-wrap items-center gap-6 text-xs text-zinc-600">
 				{#if codeforcesData}
-					<span>⚡ Codeforces: connected as <span class="text-zinc-400">{codeforcesData.handle}</span></span>
+					<span
+						>⚡ Codeforces: connected as <span class="text-zinc-400">{codeforcesData.handle}</span
+						></span
+					>
 				{/if}
 				{#if leetcodeData}
 					<span>
@@ -572,10 +608,15 @@
 					</span>
 				{/if}
 				{#if githubData}
-					<span>🐙 GitHub: connected as <span class="text-zinc-400">{githubData.handle}</span></span>
+					<span>🐙 GitHub: connected as <span class="text-zinc-400">{githubData.handle}</span></span
+					>
 				{/if}
 				{#if !codeforcesData && !leetcodeData && !githubData}
-					<span>No platforms connected. <a href="/verify" class="text-blue-400 hover:text-blue-300">Connect one →</a></span>
+					<span
+						>No platforms connected. <a href="/verify" class="text-blue-400 hover:text-blue-300"
+							>Connect one →</a
+						></span
+					>
 				{/if}
 			</div>
 		</footer>

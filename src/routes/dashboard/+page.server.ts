@@ -163,7 +163,8 @@ export const load: PageServerLoad = async ({ locals }) => {
         leetcodeSync: {
             gapDetected: leetcodeGapDetected,
             lastSyncedAt: leetcodeLastSyncedAtISO,
-            needsInitialImport: leetcodeNeedsInitialImport
+            needsInitialImport: leetcodeNeedsInitialImport,
+            isSynced: verifiedPlatforms.find(p => p.platform === 'leetcode')?.isSynced ?? false
         }
     };
 };
