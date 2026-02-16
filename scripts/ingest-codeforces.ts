@@ -1,5 +1,5 @@
-import { db } from "../src/lib/server/db";
-import { problems } from "../src/lib/server/db/schema";
+import { db } from "../src/lib/server/db/client.js";
+import { problems } from "../src/lib/server/db/schema.js";
 import { eq, and, sql } from "drizzle-orm";
 
 async function main() {

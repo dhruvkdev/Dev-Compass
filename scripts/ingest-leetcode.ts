@@ -1,5 +1,5 @@
-import { db } from "../src/lib/server/db/client";
-import { problems } from "../src/lib/server/db/schema";
+import { db } from "../src/lib/server/db/client.js";
+import { problems } from "../src/lib/server/db/schema.js";
 import { sql } from "drizzle-orm";
 
 // 1. Bulk Data (Using master branch which is often more stable for this repo)

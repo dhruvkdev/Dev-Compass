@@ -61,6 +61,7 @@
 		"@tabler/icons-svelte": "^3.36.0",
 		"@types/d3-shape": "^3.1.7",
 		"@upstash/redis": "^1.35.8",
+		"application": ".",
 		"better-auth": "^1.4.8",
 		"chart.js": "^4.5.1",
 		"chartjs-adapter-date-fns": "^3.0.0",
