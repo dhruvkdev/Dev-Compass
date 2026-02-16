@@ -78,10 +78,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 		imported += result.rowCount ?? batch.length;
 	}
 
-	// Update lastSyncedAt
+	// Update lastSyncedAt and isSynced
 	await db
 		.update(platform_handles)
-		.set({ lastSyncedAt: now, updatedAt: now })
+		.set({ 
+			lastSyncedAt: now, 
+			updatedAt: now,
+			isSynced: true 
+		})
 		.where(
 			and(
 				eq(platform_handles.userId, userId),

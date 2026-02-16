@@ -62,6 +62,7 @@ export const platform_handles = pgTable("platform_handles", {
 	verificationToken: text("verification_token"),
 	verifiedAt: timestamp("verified_at"),
 	lastSyncedAt: timestamp("last_synced_at"),
+  isSynced: boolean("is_synced").default(false),
 	createdAt: timestamp("created_at").notNull(),
 	updatedAt: timestamp("updated_at").notNull()
 }, (table) => [
