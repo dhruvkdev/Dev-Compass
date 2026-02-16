@@ -14,6 +14,11 @@
 
 	import Sparkles from '$lib/components/ui/Sparkles/index';
 	import RisingParticles from '$lib/components/ui/RisingParticles/index';
+	import VisitorCounter from '$lib/components/VisitorCounter.svelte';
+	import type { PageData } from './$types';
+
+
+	export let data: PageData;
 
 	let visible = false;
 
@@ -244,10 +249,10 @@
 					<span class="text-lg font-bold text-white">Vector</span>
 				</div>
 				<div class="flex gap-8 text-sm text-zinc-400">
-					<a href="/#" class="transition-colors hover:text-white">Privacy</a>
-					<a href="/#" class="transition-colors hover:text-white">Terms</a>
-					<a href="/#" class="transition-colors hover:text-white">Twitter</a>
-					<a href="/#" class="transition-colors hover:text-white">GitHub</a>
+					<a href="/privacy" class="transition-colors hover:text-white">Privacy</a>
+					<a href="/terms" class="transition-colors hover:text-white">Terms</a>
+					<a href="https://x.com/lolzxiii" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-white">Twitter</a>
+					<a href="https://github.com/dhruvkdev/" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-white">GitHub</a>
 				</div>
 				<p class="text-sm text-zinc-600">
 					&copy; {new Date().getFullYear()} Vector. All rights reserved.
@@ -255,4 +260,7 @@
 			</div>
 		</div>
 	</footer>
+
+	<!-- Visitor Counter -->
+	<VisitorCounter count={data.visitorCount} />
 </div>
