@@ -24,43 +24,68 @@
 
 <style>
 	.loading-bar {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		height: 3px;
-		background: transparent;
-		z-index: 99999;
-		overflow: hidden;
-	}
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	z-index: 99999;
+	background: transparent;
+	overflow: hidden;
+}
 
-	.loading-progress {
-		height: 100%;
-		background: linear-gradient(90deg, #52525b 0%, #a1a1aa 50%, #52525b 100%);
-		background-size: 200% 100%;
-		width: 100%;
-		transform-origin: left;
-		animation: shimmer 1.5s ease-in-out infinite, progress 2s cubic-bezier(0.4, 0, 0.2, 1);
-	}
+/* Main progress bar */
+.loading-progress {
+	position: relative;
+	height: 100%;
+	width: 100%;
+	transform-origin: left;
+	background: linear-gradient(
+		90deg,
+		rgba(230, 231, 235, 0.15),
+		rgba(230, 231, 235, 0.45),
+		rgba(230, 231, 235, 0.15)
+	);
+	transform: scaleX(0);
+	animation: load-progress 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
 
-	@keyframes shimmer {
-		0% {
-			background-position: 200% 0;
-		}
-		100% {
-			background-position: -200% 0;
-		}
-	}
+/* Subtle silver highlight sweep */
+.loading-progress::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(255, 255, 255, 0.35),
+		transparent
+	);
+	transform: translateX(-100%);
+	animation: highlight-sweep 1.4s ease-out forwards;
+}
 
-	@keyframes progress {
-		0% {
-			transform: scaleX(0);
-		}
-		50% {
-			transform: scaleX(0.7);
-		}
-		100% {
-			transform: scaleX(0.95);
-		}
+/* Progress growth */
+@keyframes load-progress {
+	0% {
+		transform: scaleX(0);
 	}
+	60% {
+		transform: scaleX(0.7);
+	}
+	100% {
+		transform: scaleX(0.92);
+	}
+}
+
+/* One-time highlight */
+@keyframes highlight-sweep {
+	0% {
+		transform: translateX(-100%);
+	}
+	100% {
+		transform: translateX(100%);
+	}
+}
+
 </style>
