@@ -38,7 +38,7 @@ export async function getLeetcodeProblemsScored(
     ? notInArray(problems.slug, attemptedIds)
     : undefined;
 
-  return await db
+  const topTwentySubquery = await db
     .select({
       id: problems.id,
       title: problems.title,
@@ -56,8 +56,17 @@ export async function getLeetcodeProblemsScored(
         excludeCondition
       )
     )
-    .orderBy(sql`score DESC`, sql`RANDOM()`) // Add randomness to break ties and shuffle top results
-    .limit(5);
+    .orderBy(sql`score DESC`) // Add randomness to break ties and shuffle top results
+    .limit(20)
+    .as("top_twenty");
+
+    const randomThree = await db
+    .select()
+    .from(topTwentySubquery)
+    .orderBy(sql`RANDOM()`) // Shuffle only the top 20
+    .limit(3);
+
+    return randomThree;
 }
 
 
