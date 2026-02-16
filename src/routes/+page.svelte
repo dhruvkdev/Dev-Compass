@@ -15,10 +15,8 @@
 	import Sparkles from '$lib/components/ui/Sparkles/index';
 	import RisingParticles from '$lib/components/ui/RisingParticles/index';
 	import VisitorCounter from '$lib/components/VisitorCounter.svelte';
-	import type { PageData } from './$types';
 
-
-	export let data: PageData;
+	export let data;
 
 	let visible = false;
 
@@ -29,9 +27,9 @@
 
 	const features = [
 		{
-			title: 'DSA Mastery',
+			title: 'DSA & Problem Solving',
 			description:
-				'Track your progress across LeetCode and Codeforces. Get personalized recommendations to fill your knowledge gaps.',
+				'Track LeetCode and Codeforces progress. Identify weak areas and get focused practice recommendations.',
 			icon: Code,
 			color: 'text-blue-400',
 			bg: 'bg-blue-400/10'
@@ -39,15 +37,15 @@
 		{
 			title: 'Competitive Programming',
 			description:
-				'Sync with Codeforces and LeetCode. Analyze your contest performance and visualize your rating growth.',
+				'Analyze contest history, rating trends, and consistency across platforms.',
 			icon: Trophy,
 			color: 'text-yellow-400',
 			bg: 'bg-yellow-400/10'
 		},
 		{
-			title: 'Development Journey',
+			title: 'Development & Projects',
 			description:
-				'Connect your GitHub to showcase your projects. bridge the gap between algorithmic skills and real-world software engineering.',
+				'Connect GitHub to showcase real-world work and balance algorithms with engineering.',
 			icon: GitBranch,
 			color: 'text-purple-400',
 			bg: 'bg-purple-400/10'
@@ -84,7 +82,7 @@
 							></span>
 							<span class="relative inline-flex h-2 w-2 rounded-full bg-indigo-500"></span>
 						</span>
-						The AI Career Coach for Developers
+						The Personalized Career Coach for Developers
 					</span>
 				</div>
 
@@ -99,9 +97,9 @@
 				</h1>
 
 				<p class="mx-auto mb-10 max-w-2xl text-lg text-zinc-400 sm:text-xl">
-					Manage DSA, Competitive Programming, and Development in one place.
+					Track your skills, projects, and problem-solving in one place.
 					<br class="hidden sm:block" />
-					Let AI decide your best next steps so you never get lost.
+					Get clear, personalized next steps.
 				</p>
 
 				<div class="flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -134,7 +132,7 @@
 				<h2 class="mb-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
 					Everything you need to grow
 				</h2>
-				<p class="text-zinc-400">Holistic growth tracking for the modern software engineer.</p>
+				<p class="text-zinc-400">A clear view of where you are — and what to do next.</p>
 			</div>
 
 			<div class="grid gap-8 md:grid-cols-3">
@@ -249,10 +247,10 @@
 					<span class="text-lg font-bold text-white">Vector</span>
 				</div>
 				<div class="flex gap-8 text-sm text-zinc-400">
-					<a href="/privacy" class="transition-colors hover:text-white">Privacy</a>
-					<a href="/terms" class="transition-colors hover:text-white">Terms</a>
-					<a href="https://x.com/lolzxiii" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-white">Twitter</a>
-					<a href="https://github.com/dhruvkdev/" target="_blank" rel="noopener noreferrer" class="transition-colors hover:text-white">GitHub</a>
+					<a href="/#" class="transition-colors hover:text-white">Privacy</a>
+					<a href="/#" class="transition-colors hover:text-white">Terms</a>
+					<a href="/#" class="transition-colors hover:text-white">Twitter</a>
+					<a href="/#" class="transition-colors hover:text-white">GitHub</a>
 				</div>
 				<p class="text-sm text-zinc-600">
 					&copy; {new Date().getFullYear()} Vector. All rights reserved.
