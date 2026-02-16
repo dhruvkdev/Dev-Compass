@@ -33,6 +33,11 @@ export async function getLeetcodeProblemsScored(
 `.as("score");
 
 
+  // Ensure attemptedIds is not empty to avoid SQL errors
+  const excludeCondition = attemptedIds.length > 0 
+    ? notInArray(problems.slug, attemptedIds)
+    : undefined;
+
   return await db
     .select({
       id: problems.id,
@@ -48,11 +53,11 @@ export async function getLeetcodeProblemsScored(
     .where(
       and(
         eq(problems.platform, "leetcode"),
-        notInArray(problems.externalId, attemptedIds)
+        excludeCondition
       )
     )
-    .orderBy(sql`score DESC`)
-    .limit(3);
+    .orderBy(sql`score DESC`, sql`RANDOM()`) // Add randomness to break ties and shuffle top results
+    .limit(5);
 }
 
 
