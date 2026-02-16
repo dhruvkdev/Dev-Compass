@@ -5,7 +5,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "NODE_OPTIONS=--dns-result-order=ipv4first vite dev",
-		"build": "svelte-kit build",
+		"build": "vite build",
 		"start": "node build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",

@@ -6,10 +6,12 @@ import {
 	GITHUB_CLIENT_ID,
 	GITHUB_CLIENT_SECRET,
 	GOOGLE_CLIENT_ID,
-	GOOGLE_CLIENT_SECRET
+	GOOGLE_CLIENT_SECRET,
+	BETTER_AUTH_SECRET
 } from '$env/static/private';
 
 export const auth = betterAuth({
+	secret: BETTER_AUTH_SECRET,
 	baseURL: 'http://localhost:5173',
 	trustedOrigins: ['http://localhost:5173', 'http://127.0.0.1:5173'],
 	database: drizzleAdapter(db, {
