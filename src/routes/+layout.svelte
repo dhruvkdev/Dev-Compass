@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import Navbar from '$lib/components/ui/Navbar.svelte';
 	import { navigating } from '$app/stores';
+	import { Toaster } from '$lib/components/ui/sonner';
 
 	let { children } = $props();
 </script>
@@ -20,6 +21,7 @@
 
 <div>
 	{@render children()}
+	<Toaster />
 </div>
 
 <style>

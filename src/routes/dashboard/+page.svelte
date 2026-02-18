@@ -10,6 +10,8 @@
 	import type { PlatformData, RecommendedProblem, GithubRecommendation } from '$lib/types';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import { ChevronDown } from 'lucide-svelte';
+	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	let { data }: { data: PageData } = $props();
 
@@ -138,6 +140,22 @@
 		if (rating >= 1200) return 'text-emerald-400';
 		return 'text-zinc-500';
 	}
+
+	onMount(() => {
+    if (data.isGuest) {
+      toast.info(
+        "You're not logged in.",
+        {
+          description: "You can analyze accounts for now — log in to get personalized recommendations.",
+          action: {
+            label: "Login",
+            onClick: () => window.location.href = "/signup"
+          },
+          duration: 8000,
+        }
+      );
+    }
+  });
 </script>
 
 <!-- Modals & Toasts -->

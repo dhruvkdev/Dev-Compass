@@ -1,7 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { db } from '$lib/server/db';
-import { platform_handles } from '$lib/server/db/schema';
+import { platform_handles, user } from '$lib/server/db/schema';
 import { and, eq, gte, isNotNull, lte, notInArray, sql } from "drizzle-orm";
 import { getCodeforcesProblems, getCodeforcesProblemsByRating } from "$lib/server/recommendations/codeforces";
 import {  getLeetcodeProblemsScored } from "$lib/server/recommendations/leetcode";
@@ -51,9 +51,17 @@ function getAttemptedProblemIds(submissions: any[]): Set<string> {
 
 
 export const load: PageServerLoad = async ({ locals }) => {
-    if (!locals.user) throw redirect(302, '/signin');
+     const user = locals.user ?? null;
+     if (!user) {
+        return {
+            isGuest: true,
+            platforms: [],
+            hasVerifiedPlatforms: false,
+            leetcodeSync: null
+        };
+    }
 
-    const userId = locals.user.id;
+    const userId = user.id;
 
     // Fetch verified platforms from database
     const verifiedPlatforms = await db
@@ -158,6 +166,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     
 
     return { 
+        isGuest: false,
         platforms, 
         hasVerifiedPlatforms: true,
         leetcodeSync: {
