@@ -18,9 +18,12 @@ type PlatformData = {
 };
 
 export const load: PageServerLoad = async ({ locals }) => {
-    if (!locals.user) throw redirect(302, '/signin');
 
-    const userId = locals.user.id;
+    const userId = locals?.user?.id ?? null;
+
+    if (!userId) {
+        return { platforms: [], hasVerifiedPlatforms: false };
+    }
 
     // Fetch verified platforms from database
     const verifiedPlatforms = await db
