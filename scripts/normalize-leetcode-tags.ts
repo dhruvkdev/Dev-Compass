@@ -1,4 +1,4 @@
-import { db } from "../src/lib/server/db";
+import { db } from "../src/lib/server/db/client.js";
 import { problems } from "../src/lib/server/db/schema";
 import { eq } from "drizzle-orm";
 import { normalizeTag } from "../src/lib/utils/normalise";

@@ -1,7 +1,15 @@
-import { Redis } from '@upstash/redis';
-import { env } from '$env/dynamic/private';
+import Redis from "ioredis";
 
-export const redis = new Redis({
-  url: env.UPSTASH_REDIS_REST_URL!,
-  token: env.UPSTASH_REDIS_REST_TOKEN!
+const redis = new Redis(
+  process.env.REDIS_URL || "redis://localhost:6379"
+);
+
+redis.on("connect", () => {
+  console.log("Redis connected");
 });
+
+redis.on("error", (err) => {
+  console.error("Redis error:", err);
+});
+
+export default redis;
