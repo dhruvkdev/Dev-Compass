@@ -1,5 +1,4 @@
-import { rateLimitSchema } from "better-auth";
-import { pgTable, text, integer, timestamp, boolean, uniqueIndex, pgEnum, uuid, jsonb, index, PgUUID } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, boolean, uniqueIndex, pgEnum, uuid, jsonb, index } from "drizzle-orm/pg-core";
 
 export const platformEnum = pgEnum('platform', ['leetcode', 'codeforces', 'codechef', 'github', 'geeksforgeeks', 'atcoder', 'hackerrank', 'hackerearth', 'cses', 'usaco']);
 export const contextType = pgEnum('contextType', ['dsa_roadmap', 'cp_strategy', 'dev_suggestion', 'global_summary']);

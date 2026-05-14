@@ -2,27 +2,6 @@ services:
   app:
     build: .
     ports:
-      - 5173:5173
-    depends_on:
-      - db
-      - redis
+      - "5173:5173"
     env_file:
       - .env
-  db:
-    image: postgres
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: local
-    volumes:
-      - pgdata:/var/lib/postgresql
-
-  redis:
-    image: redis
-    ports: 
-      - 6379:6379
-volumes:
-  pgdata:

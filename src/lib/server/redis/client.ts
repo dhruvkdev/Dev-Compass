@@ -1,15 +1,15 @@
-import Redis from "ioredis";
+import 'dotenv/config';
+import { Redis } from '@upstash/redis';
 
-const redis = new Redis(
-  process.env.REDIS_URL || "redis://localhost:6379"
-);
+const url = process.env.UPSTASH_REDIS_REST_URL;
+const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-redis.on("connect", () => {
-  console.log("Redis connected");
-});
+if (!url || !token) {
+	throw new Error(
+		'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN (Upstash REST API credentials from the Upstash console).'
+	);
+}
 
-redis.on("error", (err) => {
-  console.error("Redis error:", err);
-});
+const redis = new Redis({ url, token });
 
 export default redis;
