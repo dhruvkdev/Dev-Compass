@@ -10,11 +10,8 @@ export async function getAtCoderStatsCached(username: string) {
   // 1️⃣ Check cache
   const cached = await getCache<any>(key);
   if (cached) {
-    console.log('AtCoder cache HIT');
     return cached;
   }
-
-  console.log('AtCoder cache MISS');
 
   // 2️⃣ Fetch fresh
   const fresh = await fetchAtCoderStats(username);

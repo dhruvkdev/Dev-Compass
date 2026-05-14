@@ -11,11 +11,8 @@ export async function getGithubStatsCached(username: string): Promise<GithubStat
   // 1️⃣ Check cache
   const cached = await getCache<GithubStats>(key);
   if (cached) {
-    console.log('GitHub cache HIT');
     return cached;
   }
-
-  console.log('GitHub cache MISS');
 
   // 2️⃣ Fetch fresh
   const fresh = await fetchGithubStats(username);

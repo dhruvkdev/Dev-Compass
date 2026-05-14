@@ -6,7 +6,7 @@
 	"scripts": {
 		"dev": "NODE_OPTIONS=--dns-result-order=ipv4first vite dev",
 		"build": "vite build",
-		"start": "node build",
+		"start": "node build/index.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",

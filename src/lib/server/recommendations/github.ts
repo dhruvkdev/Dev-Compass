@@ -1,7 +1,7 @@
 import { db } from "$lib/server/db";
 import { github_profile_snapshots, github_analysis, github_recommendations, github_task_templates } from '$lib/server/db/schema';
 import { getGithubStatsCached } from '$lib/server/cache/github';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import type { GithubAnalysis, GithubRecommendation, GithubRecommendationRule } from "$lib/types";
 
 async function normalizeGithubStats(username: string) {
@@ -211,6 +211,27 @@ export async function analyzeGithubSnapshot(snapshot: any) {
 }
 
 export async function generateGithubRecommendations(analysis: GithubAnalysis) {
+  const alreadyForAnalysis = await db.query.github_recommendations.findMany({
+    where: (t, { eq, and, isNull }) =>
+      and(
+        eq(t.analysisId, analysis.id),
+        isNull(t.dismissedAt),
+        isNull(t.completedAt)
+      ),
+  });
+
+  if (alreadyForAnalysis.length >= 3) {
+    return alreadyForAnalysis
+      .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      .slice(0, 3)
+      .map((e) => ({
+        category: e.category,
+        axisTargeted: e.axisTargeted,
+        title: e.title,
+        description: e.description,
+      })) as GithubRecommendation[];
+  }
+
   const rules: GithubRecommendationRule[] = [
     {
       priority: 1,

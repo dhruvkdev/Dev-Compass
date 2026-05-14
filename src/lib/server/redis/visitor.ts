@@ -1,13 +1,13 @@
-import redis from './client';
+import { getRedis } from './client';
 
 const VISITOR_KEY = 'devcompass:visitors:total';
 
 export async function incrementVisitors(): Promise<number> {
-  const count = await redis.incr(VISITOR_KEY);
-  return count;
+	const count = await getRedis().incr(VISITOR_KEY);
+	return count;
 }
 
 export async function getVisitorCount(): Promise<number> {
-  const count = await redis.get(VISITOR_KEY);
-  return count ? Number(count) : 0;
+	const count = await getRedis().get(VISITOR_KEY);
+	return count ? Number(count) : 0;
 }

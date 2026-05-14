@@ -3,10 +3,31 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-if (!process.env.DATABASE_URL) {
-	throw new Error('DATABASE_URL is not set');
+type DB = ReturnType<typeof drizzle<typeof schema>>;
+
+let instance: DB | undefined;
+
+function createDb(): DB {
+	const url = process.env.DATABASE_URL;
+	if (!url) {
+		throw new Error('DATABASE_URL is not set');
+	}
+	return drizzle({ client: neon(url), schema });
 }
 
-const sql = neon(process.env.DATABASE_URL);
+/** Lazy so `vite build` can bundle SSR without DB credentials at build time. */
+export function getDb(): DB {
+	if (!instance) instance = createDb();
+	return instance;
+}
 
-export const db = drizzle({ client: sql, schema });
+export const db = new Proxy({} as DB, {
+	get(_target, prop, receiver) {
+		const d = getDb();
+		const value = Reflect.get(d as object, prop, receiver);
+		if (typeof value === 'function') {
+			return (value as (...args: unknown[]) => unknown).bind(d);
+		}
+		return value;
+	},
+}) as DB;
