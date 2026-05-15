@@ -1,0 +1,43 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Setup gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker auth
+        run: |
+          gcloud auth configure-docker asia-south2-docker.pkg.dev -q
+
+      - name: Build Docker image
+        run: |
+          docker build -t asia-south2-docker.pkg.dev/${{ secrets.PROJECT_ID }}/devcompass/devcompass:${{ github.sha }} .
+
+      - name: Push Docker image
+        run: |
+          docker push asia-south2-docker.pkg.dev/${{ secrets.PROJECT_ID }}/devcompass/devcompass:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy devcompass \
+            --image asia-south2-docker.pkg.dev/${{ secrets.PROJECT_ID }}/devcompass/devcompass:${{ github.sha }} \
+            --region asia-south2 \
+            --allow-unauthenticated \
+            --set-env-vars BETTER_AUTH_URL=${{ secrets.BETTER_AUTH_URL }},NODE_ENV=production \
+            --update-secrets DATABASE_URL=DATABASE_URL:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,GITHUB_PAT=GITHUB_PAT:latest,UPSTASH_REDIS_REST_URL=UPSTASH_REDIS_REST_URL:latest,UPSTASH_REDIS_REST_TOKEN=UPSTASH_REDIS_REST_TOKEN:latest,BETTER_AUTH_SECRET=BETTER_AUTH_SECRET:latest
