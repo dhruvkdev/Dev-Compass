@@ -1,14 +1,31 @@
-FROM oven/bun:1
-
+FROM oven/bun:1-alpine AS builder
 WORKDIR /app
 
-COPY package.json ./
-RUN bun install
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
+ENV NODE_ENV=production
+
 RUN bun run build
 
-EXPOSE 5173
 
-CMD ["sh", "-c", "bunx drizzle-kit push && bun run scripts/ingest-codeforces.ts && bun run scripts/ingest-leetcode.ts && bun run scripts/normalize-leetcode-tags.ts && bun run preview --host 0.0.0.0 --port 5173"]
+FROM oven/bun:1-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=8080
+
+COPY package.json bun.lock ./
+RUN bun install --frozen-lockfile --production
+
+COPY --from=builder /app/build ./build
+
+EXPOSE 8080
+
+CMD ["bun", "./build/index.js"]

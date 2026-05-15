@@ -1,5 +1,5 @@
 import { incrementVisitors } from '$lib/server/redis/visitor';
-import type { PageServerLoad } from './analysis/$types';
+import type { PageServerLoad } from './$types';
 
 
 export const load: PageServerLoad = async () => {

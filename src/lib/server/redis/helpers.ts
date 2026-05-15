@@ -1,15 +1,17 @@
-import redis from './client';
+import { getRedis } from './client';
 
 export async function getCache<T>(key: string): Promise<T | null> {
-  const data = await redis.get(key);
-  if (!data) return null;
-  return JSON.parse(data) as T;
+	const data = await getRedis().get<T>(key);
+
+
+	if (data == null) return null;
+	return data;
 }
 
 export async function setCache<T>(
-  key: string,
-  value: T,
-  ttlSeconds: number
+	key: string,
+	value: T,
+	ttlSeconds: number
 ) {
-  await redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+	await getRedis().set(key, value, { ex: ttlSeconds });
 }

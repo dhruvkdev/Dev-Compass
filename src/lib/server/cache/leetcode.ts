@@ -86,11 +86,8 @@ export async function getLeetCodeStatsCached(username: string, userId?: string):
   let fromCache = false;
 
   if (stats) {
-    console.log('LeetCode cache HIT');
     fromCache = true;
   } else {
-    console.log('LeetCode cache MISS');
-
     // 2️⃣ Fetch fresh
     stats = await fetchLeetCodeStats(username);
     if (!stats) return null;

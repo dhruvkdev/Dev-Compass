@@ -1,28 +1,23 @@
+# SvelteKit (adapter-node) listens on PORT inside the container (default 8080 in the image).
+# Published port must match what you open in the browser: http://localhost:8080
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DATABASE_URL: ${DATABASE_URL}
+
     ports:
-      - 5173:5173
-    depends_on:
-      - db
-      - redis
+      - "8080:8080"
+
     env_file:
       - .env
-  db:
-    image: postgres
-    restart: always
-    ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: local
-    volumes:
-      - pgdata:/var/lib/postgresql
 
-  redis:
-    image: redis
-    ports: 
-      - 6379:6379
-volumes:
-  pgdata:
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      # adapter-node + SvelteKit CSRF: must match the URL you type in the browser (not :5173 from .env).
+      ORIGIN: "http://localhost:8080"
+      # Session cookies + OAuth redirects must match the same public URL as ORIGIN for Docker.
+      BETTER_AUTH_URL: "http://localhost:8080"

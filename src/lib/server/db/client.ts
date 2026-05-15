@@ -1,23 +1,33 @@
-// Standalone DB client for use in scripts (no SvelteKit dependencies)
-// This file can be imported using relative paths from scripts/
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
+import 'dotenv/config';
+import { neon } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-const DATABASE_URL = process.env.DATABASE_URL;
+type DB = ReturnType<typeof drizzle<typeof schema>>;
 
-// if (!DATABASE_URL) {
-//   throw new Error('DATABASE_URL is not set');
-// }
+let instance: DB | undefined;
 
-const pool = new pg.Pool({
-  connectionString: DATABASE_URL,
-  keepAlive: true,
-  allowExitOnIdle: false,
-});
+function createDb(): DB {
+	const url = process.env.DATABASE_URL;
+	if (!url) {
+		throw new Error('DATABASE_URL is not set');
+	}
+	return drizzle({ client: neon(url), schema });
+}
 
-pool.on('error', (err) => {
-  console.error('Postgres Pool Error:', err);
-});
+/** Lazy so `vite build` can bundle SSR without DB credentials at build time. */
+export function getDb(): DB {
+	if (!instance) instance = createDb();
+	return instance;
+}
 
-export const db = drizzle(pool, { schema });
+export const db = new Proxy({} as DB, {
+	get(_target, prop, receiver) {
+		const d = getDb();
+		const value = Reflect.get(d as object, prop, receiver);
+		if (typeof value === 'function') {
+			return (value as (...args: unknown[]) => unknown).bind(d);
+		}
+		return value;
+	},
+}) as DB;

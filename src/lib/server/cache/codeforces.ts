@@ -10,11 +10,8 @@ export async function getCodeforcesStatsCached(username: string): Promise<Codefo
   // 1️⃣ Check cache
   const cached = await getCache<any>(key);
   if (cached) {
-    console.log('Codeforces cache HIT');
     return { success: true, data: cached };
   }
-
-  console.log('Codeforces cache MISS');
 
   // 2️⃣ Fetch fresh
   const result = await fetchCodeforcesStats(username);

@@ -7,8 +7,14 @@ import { env } from '$env/dynamic/private';
 
 export const auth = betterAuth({
     secret: env.BETTER_AUTH_SECRET || "BUILD_TIME_SECRET_REPLACE_ME_IN_PROD",
-    baseURL: env.BETTER_AUTH_URL || "http://localhost:5173",
-    trustedOrigins: [env.BETTER_AUTH_URL || "http://localhost:5173", "http://localhost:5173"],
+    baseURL: env.BETTER_AUTH_URL || "http://localhost:8080",
+    trustedOrigins: [
+        env.BETTER_AUTH_URL || "http://localhost:8080",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     
     database: drizzleAdapter(db, {
         provider: 'pg',

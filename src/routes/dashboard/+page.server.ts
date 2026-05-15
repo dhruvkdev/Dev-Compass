@@ -9,14 +9,8 @@ import { getLeetcodeTargetDifficulties, getSolvedLeetcodeSlugs, processLeetcodeW
 import { scoreProblems } from "$lib/server/recommendations/score";
 
 
-import { 
-    getCodeforcesStatsCached, 
-    getLeetCodeStatsCached, 
-    getGithubStatsCached 
-} from '$lib/server/cache';
+import { getCodeforcesStatsCached, getLeetCodeStatsCached } from '$lib/server/cache';
 import { processCodeforcesWeakness } from '$lib/server/platforms';
-import { log } from 'console';
-import { get } from 'http';
 
 import type { PlatformData, CodeforcesDashboardData, GithubAnalysis } from '$lib/types';
 import { normalizeTag } from '$lib/utils/normalise';
